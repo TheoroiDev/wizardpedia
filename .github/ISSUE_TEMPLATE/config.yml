@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: WizardReal (main gameplay mod)
+    url: https://github.com/TheoroiDev/wizardReal
+    about: The first catalog provider — spells, triggers, ritual chants
+  - name: WizardReal wiki
+    url: https://github.com/TheoroiDev/wizardReal/wiki
+    about: Spellcasting system and server guides

@@ -1,0 +1,19 @@
+// Root build: plugin classpath + Architectury minecraft version wiring only.
+// All shared subproject configuration lives in the gradle/ apply-from scripts:
+//   common-conventions.gradle  — Java toolchain, repositories, naming
+//   loom-conventions.gradle    — Loom + minecraft/mappings (all subprojects)
+//   loader-conventions.gradle  — Loom runs (dev username / Java 17 pin)
+// See workspace-root docs/build_layout.md and docs/wizardpedia.md for rationale.
+
+plugins {
+    id "architectury-plugin" version "3.5.167"
+    // 1.17 requires architectury-plugin 3.5+ (3.4 bridges Loom <=1.11 internals).
+    id "dev.architectury.loom" version "1.17.491" apply false
+    id "com.gradleup.shadow" version "8.3.11" apply false
+}
+
+apply plugin: "architectury-plugin"
+
+architectury {
+    minecraft = rootProject.minecraft_version
+}

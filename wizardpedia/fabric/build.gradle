@@ -1,0 +1,57 @@
+apply from: rootProject.file("gradle/common-conventions.gradle")
+apply from: rootProject.file("gradle/loom-conventions.gradle")
+apply from: rootProject.file("gradle/loader-conventions.gradle")
+apply plugin: "architectury-plugin"
+apply plugin: "com.gradleup.shadow"
+
+architectury {
+    platformSetupLoomIde()
+    fabric()
+}
+
+configurations {
+    common
+    shadowCommon
+    compileClasspath.extendsFrom common
+    runtimeClasspath.extendsFrom common
+    developmentFabric.extendsFrom common
+}
+
+dependencies {
+    modImplementation "net.fabricmc:fabric-loader:${rootProject.loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
+    modImplementation "dev.architectury:architectury-fabric:${rootProject.architectury_version}"
+
+    common(project(path: ":wizardpedia-common", configuration: "namedElements")) { transitive = false }
+    shadowCommon(project(path: ":wizardpedia-common", configuration: "transformProductionFabric")) { transitive = false }
+}
+
+tasks.processResources {
+    inputs.property "version", project.version
+    filesMatching("fabric.mod.json") {
+        expand "version": project.version
+    }
+}
+
+tasks.jar {
+    archiveClassifier = "dev"
+}
+
+shadowJar {
+    exclude "architectury.common.json"
+    configurations = [project.configurations.shadowCommon]
+    archiveClassifier = "dev-shadow"
+    // Ship license/attribution inside the distributable jar (remapJar keeps
+    // everything that shadowJar produced).
+    with copySpec {
+        from(rootProject.file("LICENSE")) { into "META-INF" }
+        from(rootProject.file("legal")) { into "META-INF/legal" }
+    }
+}
+
+tasks.remapJar {
+    injectAccessWidener = true
+    inputFile = shadowJar.archiveFile
+    archiveClassifier = ""
+    dependsOn shadowJar
+}

@@ -1,0 +1,13 @@
+apply from: rootProject.file("gradle/common-conventions.gradle")
+apply from: rootProject.file("gradle/loom-conventions.gradle")
+apply plugin: "architectury-plugin"
+
+architectury {
+    common(["fabric", "forge"])
+}
+
+// Zero cross-project dependencies by design: only loader + architectury.
+dependencies {
+    modImplementation "net.fabricmc:fabric-loader:${rootProject.loader_version}"
+    modImplementation "dev.architectury:architectury:${rootProject.architectury_version}"
+}

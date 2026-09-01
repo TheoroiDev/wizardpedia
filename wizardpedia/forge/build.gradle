@@ -1,0 +1,60 @@
+apply from: rootProject.file("gradle/common-conventions.gradle")
+apply from: rootProject.file("gradle/loom-conventions.gradle")
+apply from: rootProject.file("gradle/loader-conventions.gradle")
+apply plugin: "architectury-plugin"
+apply plugin: "com.gradleup.shadow"
+
+architectury {
+    platformSetupLoomIde()
+    forge()
+}
+
+loom {
+    forge {
+        convertAccessWideners = true
+    }
+}
+
+configurations {
+    common
+    shadowBundle
+    compileClasspath.extendsFrom common
+    runtimeClasspath.extendsFrom common
+    developmentForge.extendsFrom common
+}
+
+dependencies {
+    forge "net.minecraftforge:forge:${rootProject.minecraft_version}-${rootProject.forge_version}"
+    modImplementation "dev.architectury:architectury-forge:${rootProject.architectury_version}"
+
+    common(project(path: ":wizardpedia-common", configuration: "namedElements")) { transitive = false }
+    shadowBundle(project(path: ":wizardpedia-common", configuration: "transformProductionForge")) { transitive = false }
+}
+
+tasks.processResources {
+    inputs.property "version", project.version
+    filesMatching("META-INF/mods.toml") {
+        expand "version": project.version
+    }
+}
+
+tasks.jar {
+    archiveClassifier = "dev"
+}
+
+shadowJar {
+    archiveClassifier = "dev-shadow"
+    configurations = [project.configurations.shadowBundle]
+    // Ship license/attribution inside the distributable jar (remapJar keeps
+    // everything that shadowJar produced).
+    with copySpec {
+        from(rootProject.file("LICENSE")) { into "META-INF" }
+        from(rootProject.file("legal")) { into "META-INF/legal" }
+    }
+}
+
+tasks.remapJar {
+    inputFile = shadowJar.archiveFile
+    archiveClassifier = ""
+    dependsOn shadowJar
+}

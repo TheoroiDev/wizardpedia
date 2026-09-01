@@ -1,0 +1,10 @@
+Wizardpedia (wizardpedia)
+Copyright (c) 2026 theo — MIT licensed.
+
+This jar bundles **no third-party code**; it is MIT-licensed (see
+META-INF/LICENSE and the repository-level LICENSE file). Runtime content
+shown in the catalog (entries, categories) is provided by datapacks and by
+provider mods (e.g. wizardreal) over the documented wire format — those
+contents belong to their respective authors.
+
+Repository: https://github.com/TheoroiDev/wizardpedia

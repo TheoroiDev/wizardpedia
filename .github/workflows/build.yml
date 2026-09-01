@@ -1,0 +1,31 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          validate-wrappers: true
+      - name: Build
+        run: ./gradlew build --console=plain
+      - name: Upload platform jars
+        uses: actions/upload-artifact@v4
+        with:
+          name: jars
+          path: |
+            wizardpedia/fabric/build/libs/*.jar
+            wizardpedia/forge/build/libs/*.jar
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: '**/build/reports/tests/'
