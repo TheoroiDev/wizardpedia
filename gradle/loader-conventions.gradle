@@ -21,6 +21,14 @@ loom {
                 programArgs("--quickPlayMultiplayer", quickPlay.toString())
             }
         }
+        server {
+            // Separate run dir from the client: two live JVMs on one `run/`
+            // collide on Windows file locks (log4j latest.log deletion,
+            // FabricLoader run/.fabric/processedMods remap cache) and die
+            // with "Failed to remap mods!" / AccessDenied. runServer's
+            // eula/online-mode auto-config below follows this dir.
+            runDir "run-server"
+        }
     }
 }
 
