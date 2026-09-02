@@ -1,8 +1,12 @@
 name: build
 
+# Trigger policy: tags (v*) = release gate; PRs = pre-merge checks; push is
+# intentionally NOT a trigger (local `gradlew build` is the per-push gate).
+# GitHub Release upload from tag builds is planned but deliberately not
+# implemented yet (manual release for now).
 on:
   push:
-    branches: [main]
+    tags: ["v*"]
   pull_request:
   workflow_dispatch:
 
