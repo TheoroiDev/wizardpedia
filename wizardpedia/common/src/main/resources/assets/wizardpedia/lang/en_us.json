@@ -1,5 +1,22 @@
 {
+  "itemGroup.wizardpedia.main": "Wizardpedia",
+  "item.wizardpedia.wizardpedia": "Wizardpedia",
+
   "wizardpedia.category.guide": "Guide",
+
+  "wizardpedia.ui.title": "Wizardpedia",
+  "wizardpedia.ui.all": "All",
+  "wizardpedia.ui.search": "Search...",
+  "wizardpedia.ui.empty": "No entries match.",
+  "wizardpedia.ui.locked": "Locked",
+  "wizardpedia.ui.unlocked": "Discovered",
+  "wizardpedia.ui.keywords": "Keywords: %s",
+  "wizardpedia.ui.category": "Category: %s",
+  "wizardpedia.ui.entries": "%s entries",
+  "wizardpedia.ui.intro.1": "The book is a living catalog fed by datapacks and provider mods.",
+  "wizardpedia.ui.intro.2": "Pick a bookmark, browse the grid, click an entry for details.",
+  "wizardpedia.ui.intro.3": "Use the search box to match titles, keywords or ids.",
+  "wizardpedia.ui.intro.4": "Locked entries are greyed out until their provider unlocks them.",
 
   "wizardpedia.entry.about.title": "About Wizardpedia",
   "wizardpedia.entry.about.1": "The Wizardpedia book is a living, in-game catalog.",

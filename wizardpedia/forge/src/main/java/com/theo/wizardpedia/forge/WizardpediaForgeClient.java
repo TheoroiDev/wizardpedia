@@ -1,6 +1,8 @@
 package com.theo.wizardpedia.forge;
 
 import com.theo.wizardpedia.Wizardpedia;
+import com.theo.wizardpedia.client.WizardpediaClientHooks;
+import com.theo.wizardpedia.client.WizardpediaScreen;
 import com.theo.wizardpedia.net.CatalogNetwork;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
@@ -9,7 +11,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 /**
  * Client initialization for Wizardpedia on Forge: registers the S2C catalog
- * receiver; the book screen hook (M3) goes here too.
+ * receiver and installs the book-screen opener.
  *
  * <p>{@link FMLClientSetupEvent} is a MOD-bus event — this class MUST stay on
  * {@code Bus.MOD}. With the default FORGE bus the handler silently never
@@ -23,6 +25,9 @@ public final class WizardpediaForgeClient {
 
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
-        event.enqueueWork(CatalogNetwork::registerClientReceiver);
+        event.enqueueWork(() -> {
+            CatalogNetwork.registerClientReceiver();
+            WizardpediaClientHooks.setScreenOpener(WizardpediaScreen::new);
+        });
     }
 }

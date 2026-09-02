@@ -1,5 +1,22 @@
 {
+  "itemGroup.wizardpedia.main": "巫师百科",
+  "item.wizardpedia.wizardpedia": "巫师百科",
+
   "wizardpedia.category.guide": "指南",
+
+  "wizardpedia.ui.title": "巫师百科",
+  "wizardpedia.ui.all": "全部",
+  "wizardpedia.ui.search": "搜索…",
+  "wizardpedia.ui.empty": "没有匹配的条目。",
+  "wizardpedia.ui.locked": "未解锁",
+  "wizardpedia.ui.unlocked": "已发现",
+  "wizardpedia.ui.keywords": "关键词：%s",
+  "wizardpedia.ui.category": "分类：%s",
+  "wizardpedia.ui.entries": "%s 个条目",
+  "wizardpedia.ui.intro.1": "本书是持续更新的图鉴，收录数据包与提供方模组的条目。",
+  "wizardpedia.ui.intro.2": "点选书签、翻阅网格，点击条目查看详情。",
+  "wizardpedia.ui.intro.3": "搜索框可匹配标题、关键词或 id。",
+  "wizardpedia.ui.intro.4": "未解锁的条目灰显，直到提供方将其解锁。",
 
   "wizardpedia.entry.about.title": "关于巫师百科",
   "wizardpedia.entry.about.1": "巫师百科是一本会持续更新的游戏内图鉴。",
