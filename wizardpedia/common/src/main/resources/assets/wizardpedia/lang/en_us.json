@@ -1,0 +1,18 @@
+{
+  "wizardpedia.category.guide": "Guide",
+
+  "wizardpedia.entry.about.title": "About Wizardpedia",
+  "wizardpedia.entry.about.1": "The Wizardpedia book is a living, in-game catalog.",
+  "wizardpedia.entry.about.2": "Its pages list entries contributed by datapacks and by provider mods.",
+  "wizardpedia.entry.about.3": "Locked entries are greyed out until their provider marks them discovered.",
+
+  "wizardpedia.entry.datapack.title": "Datapack Entries",
+  "wizardpedia.entry.datapack.1": "Any datapack can add entries — no code required.",
+  "wizardpedia.entry.datapack.2": "Add JSON files under data/<namespace>/wizardpedia/categories/ and /entries/.",
+  "wizardpedia.entry.datapack.3": "Run /reload to rescan; a malformed file is skipped whole.",
+
+  "wizardpedia.entry.provider.title": "Provider Mods",
+  "wizardpedia.entry.provider.1": "Mods can feed the catalog over the wizardpedia:catalog channel.",
+  "wizardpedia.entry.provider.2": "No compile-time dependency is needed — packets follow a documented wire format.",
+  "wizardpedia.entry.provider.3": "Provider entries win id conflicts and may override the locked flag."
+}

@@ -1,0 +1,13 @@
+{
+  "id": "wizardpedia:provider_push",
+  "category": "wizardpedia:guide",
+  "title_key": "wizardpedia.entry.provider.title",
+  "locked": false,
+  "icon": "minecraft:bundle",
+  "aliases": ["provider", "push", "providermod"],
+  "lines_key": [
+    "wizardpedia.entry.provider.1",
+    "wizardpedia.entry.provider.2",
+    "wizardpedia.entry.provider.3"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "id": "wizardpedia:datapack_entries",
+  "category": "wizardpedia:guide",
+  "title_key": "wizardpedia.entry.datapack.title",
+  "locked": false,
+  "icon": "minecraft:paper",
+  "aliases": ["datapack", "entries", "数据包"],
+  "lines_key": [
+    "wizardpedia.entry.datapack.1",
+    "wizardpedia.entry.datapack.2",
+    "wizardpedia.entry.datapack.3"
+  ]
+}

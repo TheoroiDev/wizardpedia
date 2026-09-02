@@ -1,0 +1,18 @@
+{
+  "wizardpedia.category.guide": "指南",
+
+  "wizardpedia.entry.about.title": "关于巫师百科",
+  "wizardpedia.entry.about.1": "巫师百科是一本会持续更新的游戏内图鉴。",
+  "wizardpedia.entry.about.2": "书页中收录来自数据包和提供方模组的条目。",
+  "wizardpedia.entry.about.3": "未解锁的条目会灰显，直到提供方标记其被发现。",
+
+  "wizardpedia.entry.datapack.title": "数据包条目",
+  "wizardpedia.entry.datapack.1": "任何数据包都能新增条目，无需编写代码。",
+  "wizardpedia.entry.datapack.2": "在 data/<命名空间>/wizardpedia/categories/ 与 /entries/ 下添加 JSON 文件即可。",
+  "wizardpedia.entry.datapack.3": "执行 /reload 重新扫描；解析失败的文件会被整体跳过。",
+
+  "wizardpedia.entry.provider.title": "提供方模组",
+  "wizardpedia.entry.provider.1": "模组可通过 wizardpedia:catalog 通道投喂图鉴数据。",
+  "wizardpedia.entry.provider.2": "无需编译期依赖——数据包遵循公开的线格式契约。",
+  "wizardpedia.entry.provider.3": "提供方条目在 id 冲突时优先，并可覆盖锁定标记。"
+}

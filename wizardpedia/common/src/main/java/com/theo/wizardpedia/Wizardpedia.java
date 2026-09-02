@@ -1,6 +1,10 @@
 package com.theo.wizardpedia;
 
+import com.theo.wizardpedia.server.WizardpediaServer;
+import dev.architectury.event.events.common.LifecycleEvent;
+import dev.architectury.event.events.common.PlayerEvent;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,5 +35,13 @@ public final class Wizardpedia {
         if (initialized) return;
         initialized = true;
         LOGGER.info("Wizardpedia initializing");
+        // The server must be captured before datapack reload listeners fire
+        // (datapack load runs between SERVER_STARTING and SERVER_STARTED).
+        LifecycleEvent.SERVER_STARTING.register(WizardpediaServer::setServer);
+        LifecycleEvent.SERVER_STARTED.register(WizardpediaServer::setServer);
+        LifecycleEvent.SERVER_STOPPED.register(server -> WizardpediaServer.setServer(null));
+        // Every joining player gets the full catalog (datapack source).
+        // Architectury's PLAYER_JOIN callback already hands us a ServerPlayer.
+        PlayerEvent.PLAYER_JOIN.register(WizardpediaServer.INSTANCE::sync);
     }
 }

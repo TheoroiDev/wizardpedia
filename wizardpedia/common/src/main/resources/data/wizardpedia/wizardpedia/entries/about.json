@@ -1,0 +1,13 @@
+{
+  "id": "wizardpedia:about",
+  "category": "wizardpedia:guide",
+  "title_key": "wizardpedia.entry.about.title",
+  "locked": false,
+  "icon": "minecraft:writable_book",
+  "aliases": ["wizardpedia", "pedia", "catalog", "图鉴", "百科"],
+  "lines_key": [
+    "wizardpedia.entry.about.1",
+    "wizardpedia.entry.about.2",
+    "wizardpedia.entry.about.3"
+  ]
+}
