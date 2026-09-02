@@ -99,8 +99,15 @@ public final class CatalogNetwork {
             return;
         }
         switch (parsed.type()) {
-            case FULL_SYNC -> ctx.queue(() -> PediaState.handleFullSync(parsed.categories(), parsed.entries()));
-            case PROVIDER_PUSH -> ctx.queue(() -> PediaState.handleProviderPush(parsed.categories(), parsed.entries()));
+            case FULL_SYNC -> ctx.queue(() -> {
+                PediaState.handleFullSync(parsed.categories(), parsed.entries());
+                // Client-only path: refresh the game-dir JSON export.
+                com.theo.wizardpedia.client.CatalogExporter.export();
+            });
+            case PROVIDER_PUSH -> ctx.queue(() -> {
+                PediaState.handleProviderPush(parsed.categories(), parsed.entries());
+                com.theo.wizardpedia.client.CatalogExporter.export();
+            });
             default -> Wizardpedia.LOGGER.warn("Ignored wizardpedia:catalog packet: unknown type {}", parsed.type());
         }
     }
