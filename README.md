@@ -18,13 +18,25 @@ category bookmarks, an entry grid (search + locked greying) and detail pages.
 ## Building
 
 ```
-gradlew build          # all three subprojects + sources jars
+gradlew build          # all three subprojects + sources jars + unit tests
 gradlew :wizardpedia-fabric:runClient    # or :wizardpedia-forge:runClient
 ```
 
 Artifacts follow `{mod}-{loader}-{mc}-{version}.jar`, e.g.
 `wizardpedia-fabric-1.20.1-0.1.0.jar`. Runs are pinned to the Java 17
 toolchain; runServer auto-writes `eula.txt` + `online-mode=false` (dev).
+
+## Development notes
+
+- `-PquickPlay=host:port` on `runClient` joins a server on launch (MC 1.20+
+  quick play) — used by joint testing.
+- Forge dev-testing helpers (see workspace `docs/wizardpedia.md` §7):
+  `gradlew :wizardpedia-forge:devFatJar` builds a named-mappings fat jar for
+  dropping into a *dev* server's `run/mods/` (production SRG jars fail in a
+  mojmap dev runtime); `-PjointTest=true` on `runClient` pulls sibling-repo
+  jars (wizardreal + voicecast) via Loom-remapped `modLocalRuntime`.
+- Provider push is verified end-to-end against wizardreal (fabric E2E; the
+  forge dev-runtime mapping gap is documented in the same doc section).
 
 ## Datapack entries
 

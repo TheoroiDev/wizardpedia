@@ -29,6 +29,15 @@ dependencies {
 
     common(project(path: ":wizardpedia-common", configuration: "namedElements")) { transitive = false }
     shadowBundle(project(path: ":wizardpedia-common", configuration: "transformProductionForge")) { transitive = false }
+
+    // Joint-test runtime deps (-PjointTest=true): wizardreal + voicecast from
+    // their sibling build outputs, remapped by Loom into this dev runtime.
+    // Production forge jars CANNOT go into a dev run's mods folder (SRG vs
+    // mojmap -> NoSuchFieldError); run/mods works in production only.
+    if (project.findProperty("jointTest") == "true") {
+        modLocalRuntime files(rootProject.file("../wizardreal/wizardreal/forge/build/libs/wizardreal-forge-1.20.1-0.3.1.jar"))
+        modLocalRuntime files(rootProject.file("../voicecast/voicecast/forge/build/libs/voicecast-forge-1.20.1-0.3.1.jar"))
+    }
 }
 
 tasks.processResources {
@@ -57,4 +66,22 @@ tasks.remapJar {
     inputFile = shadowJar.archiveFile
     archiveClassifier = ""
     dependsOn shadowJar
+}
+
+// Named-mappings fat jar for Forge DEV runs (run/mods joint testing).
+// The production remapJar output is SRG-mapped and fails with
+// NoSuchFieldError inside a mojmap dev runtime (fabric's intermediary jars
+// get auto-remapped by Loom; forge jars dropped into run/mods do not).
+// Dev runs expect named classes + the untransformed common — exactly what
+// the `common` development configuration carries, so shade that in.
+tasks.register("devFatJar", com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+    group = "build"
+    description = "Named-mappings fat jar for forge dev run/mods testing."
+    archiveClassifier = "dev-fat"
+    configurations = [project.configurations.common]
+    from(sourceSets.main.output)
+    exclude "architectury.common.json"
+    with copySpec {
+        from(rootProject.file("LICENSE")) { into "META-INF" }
+    }
 }

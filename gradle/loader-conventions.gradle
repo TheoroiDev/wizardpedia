@@ -14,6 +14,12 @@ loom {
     runs {
         client {
             programArgs("--username", "dev")
+            // Automation hook (joint testing): -PquickPlay=host:port makes the
+            // dev client join a server on launch (MC 1.20+ quick play).
+            def quickPlay = project.findProperty("quickPlay")
+            if (quickPlay != null) {
+                programArgs("--quickPlayMultiplayer", quickPlay.toString())
+            }
         }
     }
 }
