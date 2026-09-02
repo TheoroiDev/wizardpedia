@@ -11,6 +11,9 @@ runs/
 run*/
 logs/
 
+# Test capture logs (joint-test / smoke runs) — see AGENTS.md 测试日志落点
+test/
+
 # IDE - IntelliJ IDEA
 .idea/
 *.iml
