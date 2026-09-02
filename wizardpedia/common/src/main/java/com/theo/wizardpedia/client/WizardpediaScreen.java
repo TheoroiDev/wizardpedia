@@ -248,8 +248,21 @@ public class WizardpediaScreen extends Screen {
             int color = i == selectedBookmark ? COL_TAB_ACTIVE : hover ? COL_TAB_HOVER : COL_TAB;
             g.fill(r[0], r[1], r[2], r[3], color);
             Bookmark bookmark = bookmarks.get(i);
-            String label = font.plainSubstrByWidth(bookmark.label().getString(), LEFT_W - 10);
-            g.drawString(font, label, r[0] + 4, r[1] + 4, COL_TEXT, false);
+            ItemStack icon = bookmark.category() == null ? ItemStack.EMPTY
+                    : iconStack(bookmark.category().iconItem());
+            int textX = r[0] + 4;
+            int textMax = LEFT_W - 10;
+            if (!icon.isEmpty()) {
+                g.pose().pushPose();
+                g.pose().translate(r[0] + 3, r[1] + 4, 0);
+                g.pose().scale(0.5f, 0.5f, 1.0f);
+                g.renderItem(icon, 0, 0);
+                g.pose().popPose();
+                textX = r[0] + 13;
+                textMax = r[2] - textX - 2;
+            }
+            String label = font.plainSubstrByWidth(bookmark.label().getString(), textMax);
+            g.drawString(font, label, textX, r[1] + 4, COL_TEXT, false);
         }
 
         switch (page) {

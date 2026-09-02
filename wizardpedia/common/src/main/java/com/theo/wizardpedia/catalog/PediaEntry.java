@@ -23,25 +23,25 @@ public record PediaEntry(String id, String categoryId, String titleKey, boolean 
     public static final int MAX_LINE_KEY = 160;
 
     public static final Codec<PediaEntry> CODEC = RecordCodecBuilder.create(i -> i.group(
-            Codec.STRING.fieldOf("id").forGetter(PediaEntry::id),
-            Codec.STRING.fieldOf("category").forGetter(PediaEntry::categoryId),
-            Codec.STRING.fieldOf("title_key").forGetter(PediaEntry::titleKey),
+            WireText.capped(MAX_ID).fieldOf("id").forGetter(PediaEntry::id),
+            WireText.capped(MAX_CATEGORY).fieldOf("category").forGetter(PediaEntry::categoryId),
+            WireText.capped(MAX_TITLE_KEY).fieldOf("title_key").forGetter(PediaEntry::titleKey),
             Codec.BOOL.optionalFieldOf("locked", false).forGetter(PediaEntry::locked),
-            Codec.STRING.optionalFieldOf("icon", "").forGetter(PediaEntry::iconItem),
-            Codec.STRING.listOf().optionalFieldOf("aliases", List.of()).forGetter(PediaEntry::aliases),
-            Codec.STRING.listOf().optionalFieldOf("lines_key", List.of()).forGetter(PediaEntry::lines)
+            WireText.capped(MAX_ICON).optionalFieldOf("icon", "").forGetter(PediaEntry::iconItem),
+            WireText.capped(MAX_ALIAS).listOf().optionalFieldOf("aliases", List.of()).forGetter(PediaEntry::aliases),
+            WireText.capped(MAX_LINE_KEY).listOf().optionalFieldOf("lines_key", List.of()).forGetter(PediaEntry::lines)
     ).apply(i, PediaEntry::new));
 
     public static void write(FriendlyByteBuf buf, PediaEntry entry) {
-        buf.writeUtf(entry.id, MAX_ID);
-        buf.writeUtf(entry.categoryId, MAX_CATEGORY);
-        buf.writeUtf(entry.titleKey, MAX_TITLE_KEY);
+        buf.writeUtf(WireText.truncate(entry.id, MAX_ID), MAX_ID);
+        buf.writeUtf(WireText.truncate(entry.categoryId, MAX_CATEGORY), MAX_CATEGORY);
+        buf.writeUtf(WireText.truncate(entry.titleKey, MAX_TITLE_KEY), MAX_TITLE_KEY);
         buf.writeBoolean(entry.locked);
-        buf.writeUtf(entry.iconItem, MAX_ICON);
+        buf.writeUtf(WireText.truncate(entry.iconItem, MAX_ICON), MAX_ICON);
         buf.writeVarInt(entry.aliases.size());
-        for (String alias : entry.aliases) buf.writeUtf(alias, MAX_ALIAS);
+        for (String alias : entry.aliases) buf.writeUtf(WireText.truncate(alias, MAX_ALIAS), MAX_ALIAS);
         buf.writeVarInt(entry.lines.size());
-        for (String line : entry.lines) buf.writeUtf(line, MAX_LINE_KEY);
+        for (String line : entry.lines) buf.writeUtf(WireText.truncate(line, MAX_LINE_KEY), MAX_LINE_KEY);
     }
 
     public static PediaEntry read(FriendlyByteBuf buf) {

@@ -17,16 +17,16 @@ public record PediaCategory(String id, String nameKey, String iconItem, int sort
     public static final int MAX_ICON = 128;
 
     public static final Codec<PediaCategory> CODEC = RecordCodecBuilder.create(i -> i.group(
-            Codec.STRING.fieldOf("id").forGetter(PediaCategory::id),
-            Codec.STRING.fieldOf("name_key").forGetter(PediaCategory::nameKey),
-            Codec.STRING.optionalFieldOf("icon", "").forGetter(PediaCategory::iconItem),
+            WireText.capped(MAX_ID).fieldOf("id").forGetter(PediaCategory::id),
+            WireText.capped(MAX_NAME_KEY).fieldOf("name_key").forGetter(PediaCategory::nameKey),
+            WireText.capped(MAX_ICON).optionalFieldOf("icon", "").forGetter(PediaCategory::iconItem),
             Codec.INT.optionalFieldOf("sort", 0).forGetter(PediaCategory::sortIndex)
     ).apply(i, PediaCategory::new));
 
     public static void write(FriendlyByteBuf buf, PediaCategory category) {
-        buf.writeUtf(category.id, MAX_ID);
-        buf.writeUtf(category.nameKey, MAX_NAME_KEY);
-        buf.writeUtf(category.iconItem, MAX_ICON);
+        buf.writeUtf(WireText.truncate(category.id, MAX_ID), MAX_ID);
+        buf.writeUtf(WireText.truncate(category.nameKey, MAX_NAME_KEY), MAX_NAME_KEY);
+        buf.writeUtf(WireText.truncate(category.iconItem, MAX_ICON), MAX_ICON);
         buf.writeVarInt(category.sortIndex);
     }
 
