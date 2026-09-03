@@ -25,9 +25,10 @@ dependencies {
     common(project(path: ":wizardpedia-common", configuration: "namedElements")) { transitive = false }
     shadowCommon(project(path: ":wizardpedia-common", configuration: "transformProductionFabric")) { transitive = false }
 
-    // ===== Dev-only testing mods (modLocalRuntime = dev run only, NOT bundled) =====
-    // Carpet - testing utilities (fake players, /carpet rules) for dev runs
-    modLocalRuntime "maven.modrinth:carpet:1.4.112"
+    // Dev-only testing mods (carpet/...) are NOT gradle dependencies: they
+    // are pre-downloaded into the workspace resources/devmods/<loader>/ dir
+    // and wired by loader-conventions from manifest.txt (fabric: hardlinked
+    // into the run dir's mods/ folder).
 }
 
 tasks.processResources {

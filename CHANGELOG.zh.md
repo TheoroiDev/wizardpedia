@@ -24,4 +24,4 @@
 - 联测工具：devFatJar / `-PjointTest` / `-PquickPlay`（wizardpedia#6）
 - 开发运行 `runServer`/`runClient` 目录分离；语音模型硬链接预置进运行目录
 - Modrinth maven 仓库；联测 jar 对齐 voicecast/wizardreal 0.3.1 → 0.3.2
-- Fabric 开发运行捆绑 Carpet 测试 mod（Forge 移植受阻；voicecast#38）
+- 纯开发测试 mod 移出 gradle 依赖：release jar 预下载到工作区 `resources/devmods/<loader>/`，由 `manifest.txt` 驱动接线（fabric 硬链接进 run mods 目录；forge 作为文件依赖由 Loom 重映射；Carpet 的 Forge 移植仍受阻，voicecast#38）；语音模型事实源移至 `resources/models/`

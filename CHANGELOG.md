@@ -24,4 +24,4 @@ English primary; Chinese mirror: [CHANGELOG.zh.md](CHANGELOG.zh.md) (keep both i
 - Joint-test tooling: devFatJar / `-PjointTest` / `-PquickPlay` (wizardpedia#6)
 - Dev `runServer`/`runClient` run directories split; voice models seeded into run dirs as hard links
 - Modrinth maven repo; joint-test jars aligned to voicecast/wizardreal 0.3.1 → 0.3.2
-- Fabric dev runs bundle a Carpet testing mod (Forge port blocked; voicecast#38)
+- Dev-only testing mods moved out of gradle: release jars are pre-downloaded under workspace `resources/devmods/<loader>/` and wired from `manifest.txt` (fabric: hardlinked into the run mods folder; forge: file dependency so Loom remaps the SRG jar; Forge port of Carpet stays blocked, voicecast#38); voice-model fact source moved to `resources/models/`
