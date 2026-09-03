@@ -30,7 +30,7 @@ toolchain; runServer auto-writes `eula.txt` + `online-mode=false` (dev).
 
 - `-PquickPlay=host:port` on `runClient` joins a server on launch (MC 1.20+
   quick play) — used by joint testing.
-- Forge dev-testing helpers (see workspace `docs/wizardpedia.md` §7):
+- Forge dev-testing helpers (see workspace `docs/ref/wizardpedia.md` §7):
   `gradlew :wizardpedia-forge:devFatJar` builds a named-mappings fat jar for
   dropping into a *dev* server's `run/mods/` (production SRG jars fail in a
   mojmap dev runtime); `-PjointTest=true` on `runClient` pulls sibling-repo
