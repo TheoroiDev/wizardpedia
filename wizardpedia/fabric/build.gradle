@@ -24,6 +24,10 @@ dependencies {
 
     common(project(path: ":wizardpedia-common", configuration: "namedElements")) { transitive = false }
     shadowCommon(project(path: ":wizardpedia-common", configuration: "transformProductionFabric")) { transitive = false }
+
+    // ===== Dev-only testing mods (modLocalRuntime = dev run only, NOT bundled) =====
+    // Carpet - testing utilities (fake players, /carpet rules) for dev runs
+    modLocalRuntime "maven.modrinth:carpet:1.4.112"
 }
 
 tasks.processResources {

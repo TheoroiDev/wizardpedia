@@ -35,9 +35,16 @@ dependencies {
     // Production forge jars CANNOT go into a dev run's mods folder (SRG vs
     // mojmap -> NoSuchFieldError); run/mods works in production only.
     if (project.findProperty("jointTest") == "true") {
-        modLocalRuntime files(rootProject.file("../wizardreal/wizardreal/forge/build/libs/wizardreal-forge-1.20.1-0.3.1.jar"))
-        modLocalRuntime files(rootProject.file("../voicecast/voicecast/forge/build/libs/voicecast-forge-1.20.1-0.3.1.jar"))
+        modLocalRuntime files(rootProject.file("../wizardreal/wizardreal/forge/build/libs/wizardreal-forge-1.20.1-0.3.2.jar"))
+        modLocalRuntime files(rootProject.file("../voicecast/voicecast/forge/build/libs/voicecast-forge-1.20.1-0.3.2.jar"))
     }
+
+    // NOTE: Carpet on Forge dev is deliberately NOT wired. The "Carpet:
+    // NeoForged" 1.20.1 build (beta) assumes platform-shipped MixinExtras
+    // (NeoForge bundles it; Forge 1.20.1 does not) and its jarJar carries
+    // only the slim forge variant, so the mixin config crashes at load in
+    // dev runs. Fabric subprojects use fabric-carpet instead. Revisit if the
+    // fork ships a self-contained jar (see voicecast#38).
 }
 
 tasks.processResources {

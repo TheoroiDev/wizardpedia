@@ -22,6 +22,11 @@ repositories {
     maven { url = "https://maven.architectury.dev/" }
     maven { url = "https://maven.minecraftforge.net/" }
     maven { url = "https://maven.parchmentmc.org/" }
+    maven {
+        name = "Modrinth"
+        url = "https://api.modrinth.com/maven"
+        content { includeGroup "maven.modrinth" }
+    }
 }
 
 tasks.withType(JavaCompile).configureEach {
