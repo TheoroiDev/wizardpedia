@@ -10,10 +10,12 @@
 //     online-mode=false in the run dir before the JVM starts (other
 //     server.properties keys are preserved).
 
+def devUsername = project.findProperty("devUsername") ?: "dev"
+
 loom {
     runs {
         client {
-            programArgs("--username", "dev")
+            programArgs("--username", devUsername)
             // Automation hook (joint testing): -PquickPlay=host:port makes the
             // dev client join a server on launch (MC 1.20+ quick play).
             def quickPlay = project.findProperty("quickPlay")
