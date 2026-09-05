@@ -16,19 +16,26 @@ import java.util.List;
  * The public S2C catalog channel ({@code wizardpedia:catalog}) — the wire
  * contract any provider mod can target with zero compile-time dependency.
  *
- * <p>Packet layout (docs/wizardpedia.md §4):
+ * <p>Packet layout (formatVersion 2 — language-annotated entries,
+ * docs/wizardpedia.md §4):
  * <pre>
- * byte  formatVersion = 1
+ * byte  formatVersion = 2
  * byte  type          // 0 = FULL_SYNC (replace client datapack-source set)
  *                     // 1 = PROVIDER_PUSH (upsert by id into provider-source set)
  * varInt catCount  { utf catId(≤128), utf nameKey(≤128), utf iconItem(≤128), varInt sortIndex }
  * varInt entryCount { utf entryId(≤128), utf catId(≤128), utf titleKey(≤128), bool locked,
- *                     utf iconItem(≤128), varInt aliasCount{utf alias≤96},
- *                     varInt lineCount{utf lineKey≤160} }
+ *                     utf iconItem(≤128),
+ *                     varInt aliasLangCount { utf lang(≤8), varInt n{utf alias≤96} },
+ *                     varInt lineLangCount  { utf lang(≤8), varInt n{utf line≤160} } }
  * </pre>
  *
- * <p><b>Compatibility:</b> append-only fields; a format change bumps
- * {@link #FORMAT_VERSION} and older receivers reject the packet with a warn.
+ * <p>{@code lang} is a two-letter language code ({@code en}/{@code zh}/…);
+ * {@code ""} is the language-neutral bucket (shown on every language page).
+ * Lines are lang keys or literal chant text — the client resolves them via
+ * the translatable missing-key fallback, so both render as-is.
+ *
+ * <p><b>Compatibility:</b> a format change bumps {@link #FORMAT_VERSION};
+ * receivers that see a different leading byte reject the packet with a warn.
  *
  * <p>The S2C receiver must be registered from platform <em>client</em> init:
  * Fabric {@code ClientModInitializer} / Forge {@code FMLClientSetupEvent} on
@@ -37,7 +44,7 @@ import java.util.List;
 public final class CatalogNetwork {
     public static final ResourceLocation CHANNEL = Wizardpedia.id("catalog");
 
-    public static final byte FORMAT_VERSION = 1;
+    public static final byte FORMAT_VERSION = 2;
     public static final byte FULL_SYNC = 0;
     public static final byte PROVIDER_PUSH = 1;
 

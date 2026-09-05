@@ -4,10 +4,15 @@
   "title_key": "wizardpedia.entry.provider.title",
   "locked": false,
   "icon": "minecraft:bundle",
-  "aliases": ["provider", "push", "providermod"],
-  "lines_key": [
-    "wizardpedia.entry.provider.1",
-    "wizardpedia.entry.provider.2",
-    "wizardpedia.entry.provider.3"
-  ]
+  "aliases": {
+    "": ["provider", "push", "providermod"],
+    "zh": ["推送"]
+  },
+  "lines_key": {
+    "": [
+      "wizardpedia.entry.provider.1",
+      "wizardpedia.entry.provider.2",
+      "wizardpedia.entry.provider.3"
+    ]
+  }
 }

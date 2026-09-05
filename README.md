@@ -51,17 +51,20 @@ Any datapack (or the mod jar itself) can contribute:
 { "id": "wizardreal:explosion", "category": "wizardreal:wizardry",
   "title_key": "spell.wizardreal:explosion.name", "locked": false,
   "icon": "wizardreal:spell_tome",
-  "aliases": ["explosion", "explode", "爆裂"],
-  "lines_key": ["wizardreal.desc.explosion.1"] }
+  "aliases": { "": ["explosion", "explode"], "zh": ["爆裂"] },
+  "lines_key": { "": ["wizardreal.desc.explosion.1"] } }
 ```
 
 - `icon` is an item id (rendered in the grid/detail page); `""` = none.
-- `aliases` are free-form keywords (any language, matched by the UI search).
-- `lines_key` are lang keys resolved client-side in the active language.
+- `aliases`/`lines_key` are **language-keyed objects** (two-letter code → list);
+  `""` is the language-neutral bucket, shown on every language page. The UI
+  adds a language sub-tab row when any entry carries a language bucket.
+- `lines_key` values are lang keys resolved client-side in the active language
+  (missing keys fall back to the raw value, so literal text renders too).
 - Parsing is strict: a file that fails to decode is skipped **whole** with a
   warn log. `/reload` rescans.
 
-## Provider integration (wire format v1 — FINAL)
+## Provider integration (wire format v2 — FINAL)
 
 Mod providers push a catalog over the S2C channel `wizardpedia:catalog`
 using vanilla `FriendlyByteBuf`, **no compile-time dependency on wizardpedia
@@ -69,7 +72,7 @@ required** (hardcode the channel id + format; bump-with-rejection is the
 compatibility mechanism). Packet layout:
 
 ```
-byte  formatVersion = 1
+byte  formatVersion = 2
 byte  type          // 0 = FULL_SYNC (replace client datapack-source set)
                     // 1 = PROVIDER_PUSH (upsert by id into provider-source set)
 varInt catCount
@@ -77,8 +80,8 @@ varInt catCount
 varInt entryCount
   { utf entryId(≤128), utf catId(≤128), utf titleKey(≤128), bool locked,
     utf iconItem(≤128, ""=none),
-    varInt aliasCount { utf alias(≤96) },          // keywords, any language
-    varInt lineCount  { utf lineKey(≤160) } }      // lang keys, client-resolved
+    varInt aliasLangCount { utf lang(≤8), varInt n { utf alias(≤96) } },
+    varInt lineLangCount  { utf lang(≤8), varInt n { utf line(≤160) } } }
 ```
 
 Rules:
@@ -87,9 +90,14 @@ Rules:
 - The client merges per source; **provider entries win id conflicts** over
   datapack entries and may override `locked`.
 - FULL_SYNC replaces the client's datapack-source set; PROVIDER_PUSH upserts.
-- **Compatibility**: append-only fields. A breaking change bumps
-  `formatVersion`; receivers that see a different leading byte reject the
-  packet with a warn log (never desync).
+- `lang` is a two-letter language code (`en`/`zh`/…); `""` is the
+  language-neutral bucket (shown on every language page). `line` values are
+  lang keys **or literal chant text** — the client resolves them via the
+  translatable missing-key fallback, so both render.
+- **Compatibility**: a format change bumps `formatVersion`; receivers that
+  see a different leading byte reject the packet with a warn log (never
+  desync). v1 (flat alias/line lists, no language annotation) is retired —
+  v1 packets are rejected like any other version mismatch.
 - Registration (client side): Fabric — `ClientModInitializer`;
   Forge — `FMLClientSetupEvent` **on `Bus.MOD`** (the default FORGE bus
   silently never fires for mod-bus events).

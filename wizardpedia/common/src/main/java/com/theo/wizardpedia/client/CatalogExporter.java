@@ -17,7 +17,8 @@ import net.minecraft.network.chat.Component;
 
 /**
  * Writes the merged final catalog view to
- * {@code <game-dir>/wizardpedia/pedia_catalog.json} (export schema §6.2) —
+ * {@code <game-dir>/wizardpedia/pedia_catalog.json} (export schema §6.2,
+ * format 2: aliases/lines keyed by language code, {@code ""} = neutral) —
  * the external-tooling data source. Runs on the client thread after every
  * state change (FULL_SYNC / PROVIDER_PUSH); sources are not distinguished,
  * texts are resolved in the active game language (missing keys fall back to
@@ -34,6 +35,18 @@ public final class CatalogExporter {
 
     private CatalogExporter() {}
 
+    /** Per-language map with every line value resolved (missing keys fall
+     *  back to the raw key, so literal chant text passes through unchanged). */
+    private static Map<String, Object> exportLangMap(java.util.Map<String, java.util.List<String>> map) {
+        Map<String, Object> out = new LinkedHashMap<>();
+        for (java.util.Map.Entry<String, java.util.List<String>> e : map.entrySet()) {
+            List<Object> values = new ArrayList<>();
+            for (String value : e.getValue()) values.add(Component.translatable(value).getString());
+            out.put(e.getKey(), values);
+        }
+        return out;
+    }
+
     /** Snapshot + write the merged catalog (client thread). */
     public static void export() {
         try {
@@ -41,7 +54,7 @@ public final class CatalogExporter {
             Path file = mc.gameDirectory.toPath().resolve("wizardpedia").resolve("pedia_catalog.json");
 
             Map<String, Object> root = new LinkedHashMap<>();
-            root.put("format", 1);
+            root.put("format", 2);
             root.put("language", mc.getLanguageManager().getSelected());
 
             List<Object> categories = new ArrayList<>();
@@ -61,12 +74,8 @@ public final class CatalogExporter {
                 json.put("category", entry.categoryId());
                 json.put("title", Component.translatable(entry.titleKey()).getString());
                 json.put("locked", PediaState.isLocked(entry.id()));
-                json.put("aliases", entry.aliases());
-                List<Object> lines = new ArrayList<>();
-                for (String key : entry.lines()) {
-                    lines.add(Component.translatable(key).getString());
-                }
-                json.put("lines", lines);
+                json.put("aliases", exportLangMap(entry.aliases()));
+                json.put("lines", exportLangMap(entry.lines()));
                 entries.add(json);
             }
             root.put("entries", entries);

@@ -6,6 +6,19 @@ English primary; Chinese mirror: [CHANGELOG.zh.md](CHANGELOG.zh.md) (keep both i
 
 ### Features
 
+- breaking: catalog wire format v2 — entry aliases/chant lines are keyed by language (en/zh/ja/ko, `""` = neutral bucket shown on every page); v1 packets are rejected (wizardpedia#7)
+- Language sub-pages in the book: a tab row under the category (All languages + one page per language); default page = game language, else English, else first; detail page renders keywords/lines for the selected page
+- Book UI rework (code-drawn skin): procedural parchment/leather textures, ribbon bookmarks with notched ends, spine shading, inset entry cells with hover highlight, padlock badge on locked entries, corner ribbons, 150 ms page-turn slide (docs/plans/wizardpedia_ui_effects.md option B)
+
+### Changes
+
+- breaking: datapack entry schema v2 — `aliases`/`lines_key` become language-keyed objects; flat arrays are no longer parsed; bundled demo entries follow the new schema
+- `pedia_catalog.json` export bumps to format 2: aliases/lines grouped per language, line values resolved client-side
+
+### Modding/API
+
+- breaking: provider wire contract is v2 (see README "Provider integration"); lines accept lang keys or literal chant text via the translatable missing-key fallback
+
 - Encyclopedia book item + creative tab; HOMM-style three-level paginated catalog screen (wizardpedia#4)
 - Catalog sync: datapack entries pushed by providers, S2C full sync to clients, client-side merged state (wizardpedia#2)
 - Merged-view `pedia_catalog.json` exported on every state change (wizardpedia#5)

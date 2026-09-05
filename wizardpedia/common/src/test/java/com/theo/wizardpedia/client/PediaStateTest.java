@@ -24,7 +24,7 @@ class PediaStateTest {
     }
 
     private static PediaEntry entry(String id, String cat, boolean locked) {
-        return new PediaEntry(id, cat, id + ".title", locked, "", List.of(), List.of());
+        return new PediaEntry(id, cat, id + ".title", locked, "", java.util.Map.of(), java.util.Map.of());
     }
 
     private static List<String> ids(List<PediaCategory> categories) {
