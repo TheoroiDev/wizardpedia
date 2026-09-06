@@ -6,6 +6,16 @@ English primary; Chinese mirror: [CHANGELOG.zh.md](CHANGELOG.zh.md) (keep both i
 
 ### Features
 
+- breaking: catalog wire format v3 — the full content model per entry: entity id (live 3D preview on the detail page), tags (color-coded right-rail school filter), effect descriptions, per-language nested chant variants, and a stage ladder (gated tiers); v1/v2 packets are rejected (wizardpedia#8)
+- Book UI redesigned to a two-page HOMM layout (wizardpedia#8): left page = detail with stats, scrollable body (trigger words / effect summary / chant paragraphs with variant switcher / stage effects), and a stage-cycle control in the bottom corners; right page = the compact compendium grid with a localized name under each icon; left bookmark rail = chapters, right rail = tag filters
+- Switchable book skins: 5 shipped GUI skins generated on the SDXL pixel pipeline and reviewed for readability (vanilla / homm / tome / flat / manuscript); select via `[client] uiSkin` in `config/wizardpedia/client.json` (docs/plans/wizardpedia_homm_layout.md)
+- Behavior: ESC and the inventory key both close the book; the book reopens on the last page (category/tag/language/selection/stage kept); right-click goes back; the mouse wheel scrolls the body, flips grid pages and slides the bookmark rails
+
+### Changes
+
+- breaking: datapack entry schema gains optional `entity`/`tags`/`chants`/`stages`/`learning`/`mana_cost`/`cooldown_seconds`/`difficulty` keys; `pedia_catalog.json` export bumps to format 3
+### Features
+
 - breaking: catalog wire format v2 — entry aliases/chant lines are keyed by language (en/zh/ja/ko, `""` = neutral bucket shown on every page); v1 packets are rejected (wizardpedia#7)
 - Language sub-pages in the book: a tab row under the category (All languages + one page per language); default page = game language, else English, else first; detail page renders keywords/lines for the selected page
 - Book UI rework (code-drawn skin): procedural parchment/leather textures, ribbon bookmarks with notched ends, spine shading, inset entry cells with hover highlight, padlock badge on locked entries, corner ribbons, 150 ms page-turn slide (docs/plans/wizardpedia_ui_effects.md option B)

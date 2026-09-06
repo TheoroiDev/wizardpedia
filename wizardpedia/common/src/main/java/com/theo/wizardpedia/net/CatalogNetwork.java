@@ -16,23 +16,33 @@ import java.util.List;
  * The public S2C catalog channel ({@code wizardpedia:catalog}) — the wire
  * contract any provider mod can target with zero compile-time dependency.
  *
- * <p>Packet layout (formatVersion 2 — language-annotated entries,
+ * <p>Packet layout (formatVersion 3 — full content model,
  * docs/wizardpedia.md §4):
  * <pre>
- * byte  formatVersion = 2
+ * byte  formatVersion = 3
  * byte  type          // 0 = FULL_SYNC (replace client datapack-source set)
  *                     // 1 = PROVIDER_PUSH (upsert by id into provider-source set)
  * varInt catCount  { utf catId(≤128), utf nameKey(≤128), utf iconItem(≤128), varInt sortIndex }
- * varInt entryCount { utf entryId(≤128), utf catId(≤128), utf titleKey(≤128), bool locked,
- *                     utf iconItem(≤128),
- *                     varInt aliasLangCount { utf lang(≤8), varInt n{utf alias≤96} },
- *                     varInt lineLangCount  { utf lang(≤8), varInt n{utf line≤160} } }
+ * varInt entryCount {
+ *   utf entryId(≤128), utf catId(≤128), utf titleKey(≤128), bool locked,
+ *   float learning(-1=unknown), varInt manaCost(-1=unknown),
+ *   float cooldownSeconds(-1), float difficulty(-1),
+ *   utf iconItem(≤128), utf entityId(≤128, ""=none),
+ *   varInt tagCount { utf tag(≤32) },
+ *   varInt aliasLangCount { utf lang(≤8), varInt n{utf alias(≤96)} },
+ *   varInt descLangCount  { utf lang(≤8), varInt n{utf line(≤160)} },
+ *   varInt chantLangCount { utf lang(≤8), varInt variantCount {
+ *       varInt lineCount { utf line(≤160) } } },
+ *   varInt stageCount { varInt afterLines, float mastery, varInt manaCost(-1=inherit),
+ *       float cooldownSeconds(-1=inherit), varInt descLangCount {...} } }
  * </pre>
  *
  * <p>{@code lang} is a two-letter language code ({@code en}/{@code zh}/…);
  * {@code ""} is the language-neutral bucket (shown on every language page).
- * Lines are lang keys or literal chant text — the client resolves them via
- * the translatable missing-key fallback, so both render as-is.
+ * desc/alias values are lang keys or literal text — the client resolves them
+ * via the translatable missing-key fallback, so both render as-is. Chant
+ * variants are nested per language (the variant switcher cycles them).
+ * Stages are the entry's ascending tier ladder (e.g. spell chant stages).
  *
  * <p><b>Compatibility:</b> a format change bumps {@link #FORMAT_VERSION};
  * receivers that see a different leading byte reject the packet with a warn.
@@ -44,7 +54,7 @@ import java.util.List;
 public final class CatalogNetwork {
     public static final ResourceLocation CHANNEL = Wizardpedia.id("catalog");
 
-    public static final byte FORMAT_VERSION = 2;
+    public static final byte FORMAT_VERSION = 3;
     public static final byte FULL_SYNC = 0;
     public static final byte PROVIDER_PUSH = 1;
 

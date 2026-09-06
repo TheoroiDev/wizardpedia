@@ -3,10 +3,19 @@
   "category": "wizardpedia:guide",
   "title_key": "wizardpedia.entry.provider.title",
   "locked": false,
+  "tags": [
+    "provider"
+  ],
   "icon": "minecraft:bundle",
   "aliases": {
-    "": ["provider", "push", "providermod"],
-    "zh": ["推送"]
+    "": [
+      "provider",
+      "push",
+      "providermod"
+    ],
+    "zh": [
+      "推送"
+    ]
   },
   "lines_key": {
     "": [

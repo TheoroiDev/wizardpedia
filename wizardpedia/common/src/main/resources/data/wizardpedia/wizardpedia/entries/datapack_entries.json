@@ -3,10 +3,18 @@
   "category": "wizardpedia:guide",
   "title_key": "wizardpedia.entry.datapack.title",
   "locked": false,
+  "tags": [
+    "datapack"
+  ],
   "icon": "minecraft:paper",
   "aliases": {
-    "": ["datapack", "entries"],
-    "zh": ["数据包"]
+    "": [
+      "datapack",
+      "entries"
+    ],
+    "zh": [
+      "数据包"
+    ]
   },
   "lines_key": {
     "": [

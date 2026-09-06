@@ -6,6 +6,16 @@
 
 ### Features
 
+- breaking: 目录线格式 v3 —— 条目完整内容模型：实体 id（详情页 3D 实体预览）、tags（右轨学派色签筛选）、效果描述、按语言嵌套的咏唱变体、阶梯（chant stages）；v1/v2 包拒收（wizardpedia#8）
+- 书 UI 重排为 HOMM 双页制式（wizardpedia#8）：左页=详情（数值行、可滚动正文：触发语/效果摘要/咏唱段落含变体切换/阶效果），左下角与右下角=阶梯循环；右页=紧凑魔法大全网格（图标+名字）；左侧书签轨=章节，右侧书签轨=tag 筛选
+- 可切换书皮：5 套随 mod 发布的 GUI 皮肤（SDXL 像素产线生成 + 可读性评审：vanilla/homm/tome/flat/manuscript）；配置 `config/wizardpedia/client.json` 的 `[client] uiSkin`（docs/plans/wizardpedia_homm_layout.md）
+- 行为：ESC 与背包键均可关书；重开保留上次页（章节/tag/语言/选中/阶）；右键返回；滚轮=正文滚动/网格翻页/书签轨滑动
+
+### Changes
+
+- breaking: datapack 条目 schema 新增可选 `entity`/`tags`/`chants`/`stages`/`learning`/`mana_cost`/`cooldown_seconds`/`difficulty` 键；`pedia_catalog.json` 导出升 format 3
+### Features
+
 - breaking: 目录线格式 v2 —— 条目别名/吟唱行按语言分桶（en/zh/ja/ko，`""` = 每页都显示的语言中立桶）；v1 包将被拒收（wizardpedia#7）
 - 书内语言子页：分类书签下新增语言页签行（"通用" + 每语言一页）；默认页 = 游戏语言，无匹配用英语，再退到第一页；详情页按所选语言页渲染关键词/吟唱行
 - 书 UI 重绘（纯代码皮肤）：程序化羊皮纸/皮革纹理、燕尾丝带书签、书脊阴影、内阴影条目格 + 悬停亮边、锁定条目挂锁角标、格角丝带、150ms 翻页滑动（docs/plans/wizardpedia_ui_effects.md 方案 B）

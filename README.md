@@ -64,7 +64,7 @@ Any datapack (or the mod jar itself) can contribute:
 - Parsing is strict: a file that fails to decode is skipped **whole** with a
   warn log. `/reload` rescans.
 
-## Provider integration (wire format v2 — FINAL)
+## Provider integration (wire format v3 — FINAL)
 
 Mod providers push a catalog over the S2C channel `wizardpedia:catalog`
 using vanilla `FriendlyByteBuf`, **no compile-time dependency on wizardpedia
@@ -72,16 +72,23 @@ required** (hardcode the channel id + format; bump-with-rejection is the
 compatibility mechanism). Packet layout:
 
 ```
-byte  formatVersion = 2
+byte  formatVersion = 3
 byte  type          // 0 = FULL_SYNC (replace client datapack-source set)
                     // 1 = PROVIDER_PUSH (upsert by id into provider-source set)
 varInt catCount
   { utf catId(≤128), utf nameKey(≤128), utf iconItem(≤128, ""=none), varInt sortIndex }
-varInt entryCount
-  { utf entryId(≤128), utf catId(≤128), utf titleKey(≤128), bool locked,
-    utf iconItem(≤128, ""=none),
-    varInt aliasLangCount { utf lang(≤8), varInt n { utf alias(≤96) } },
-    varInt lineLangCount  { utf lang(≤8), varInt n { utf line(≤160) } } }
+varInt entryCount {
+  utf entryId(≤128), utf catId(≤128), utf titleKey(≤128), bool locked,
+  float learning(-1=unknown), varInt manaCost(-1=unknown),
+  float cooldownSeconds(-1), float difficulty(-1),
+  utf iconItem(≤128), utf entityId(≤128, ""=none),
+  varInt tagCount { utf tag(≤32) },
+  varInt aliasLangCount { utf lang(≤8), varInt n { utf alias(≤96) } },
+  varInt descLangCount  { utf lang(≤8), varInt n { utf line(≤160) } },
+  varInt chantLangCount { utf lang(≤8), varInt variantCount {
+      varInt lineCount { utf line(≤160) } } },
+  varInt stageCount { varInt afterLines, float mastery, varInt manaCost(-1=inherit),
+      float cooldownSeconds(-1=inherit), varInt descLangCount {...} } }
 ```
 
 Rules:
@@ -91,13 +98,18 @@ Rules:
   datapack entries and may override `locked`.
 - FULL_SYNC replaces the client's datapack-source set; PROVIDER_PUSH upserts.
 - `lang` is a two-letter language code (`en`/`zh`/…); `""` is the
-  language-neutral bucket (shown on every language page). `line` values are
-  lang keys **or literal chant text** — the client resolves them via the
+  language-neutral bucket (shown on every language page). desc/alias values
+  are lang keys **or literal text** — the client resolves them via the
   translatable missing-key fallback, so both render.
+- v3 content model: `entityId` renders a live entity preview on the detail
+  page (mob entries); `tags` feed the right bookmark rail filter (spell
+  schools etc.); `chants` nest variants per language (the detail page has a
+  variant switcher); `stages` is the entry's ascending tier ladder (gated by
+  completed lines and mastery; -1 cost/cooldown inherits the base values).
+  Chant-stage reference: wizardreal's `chant_stages` (magic_eco 03).
 - **Compatibility**: a format change bumps `formatVersion`; receivers that
   see a different leading byte reject the packet with a warn log (never
-  desync). v1 (flat alias/line lists, no language annotation) is retired —
-  v1 packets are rejected like any other version mismatch.
+  desync). v1/v2 packets are rejected like any other version mismatch.
 - Registration (client side): Fabric — `ClientModInitializer`;
   Forge — `FMLClientSetupEvent` **on `Bus.MOD`** (the default FORGE bus
   silently never fires for mod-bus events).

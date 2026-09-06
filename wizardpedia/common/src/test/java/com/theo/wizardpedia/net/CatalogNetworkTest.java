@@ -36,12 +36,18 @@ class CatalogNetworkTest {
     private static final Map<String, List<String>> LINES = Map.of(
             "en", List.of("wizardreal.chant.explosion.en.l1", "wizardreal.chant.explosion.en.l2"),
             "zh", List.of("黑袍蔽空"));
+    private static final Map<String, List<List<String>>> CHANTS = Map.of(
+            "", List.of(List.of("wizardreal.chant.l1"), List.of("wizardreal.chant.l2a", "wizardreal.chant.l2b")));
+    private static final List<PediaEntry.PediaStage> STAGES = List.of(
+            new PediaEntry.PediaStage(3, 25.0f, 20, 6.0f, Map.of("", List.of("wizardreal.effect.explosion"))));
 
     private static final List<PediaEntry> ENTRIES = List.of(
             new PediaEntry("wizardreal:explosion", "wizardreal:wizardry", "spell.wizardreal:explosion.name",
-                    true, "wizardreal:spell_tome", TRIGGER, LINES),
+                    true, 42.5f, 50, 10.0f, 1.5f, "wizardreal:spell_tome", "", List.of("fire"),
+                    TRIGGER, LINES, CHANTS, STAGES),
             new PediaEntry("wizardreal:vitae", "wizardreal:wizardry", "spell.wizardreal:vitae.name",
-                    false, "", Map.of(), Map.of()));
+                    false, PediaEntry.LEARNING_UNKNOWN, PediaEntry.COST_UNKNOWN, PediaEntry.COST_UNKNOWN,
+                    PediaEntry.DIFFICULTY_UNKNOWN, "", "", List.of(), Map.of(), Map.of(), Map.of(), List.of()));
 
     @Test
     void fullSyncRoundtrip() {
@@ -98,8 +104,10 @@ class CatalogNetworkTest {
     void cjkAliasesSurviveWire() {
         // Multi-language aliases (CJK) ride the wire verbatim within the utf caps.
         FriendlyByteBuf buf = CatalogNetwork.write(CatalogNetwork.PROVIDER_PUSH, List.of(), List.of(
-                new PediaEntry("x:y", "x:cat", "x.key", false, "",
-                        Map.of("", List.of("爆裂", "_thunder_")), Map.of())));
+                new PediaEntry("x:y", "x:cat", "x.key", false, PediaEntry.LEARNING_UNKNOWN,
+                        PediaEntry.COST_UNKNOWN, PediaEntry.COST_UNKNOWN, PediaEntry.DIFFICULTY_UNKNOWN,
+                        "", "", List.of(),
+                        Map.of("", List.of("爆裂", "_thunder_")), Map.of(), Map.of(), List.of())));
         CatalogNetwork.Parsed parsed = CatalogNetwork.read(buf);
         assertNotNull(parsed);
         assertEquals("爆裂", parsed.entries().get(0).aliases().get("").get(0));
@@ -113,9 +121,11 @@ class CatalogNetworkTest {
         List<PediaCategory> categories = List.of(
                 new PediaCategory("wizardreal:wizardry", longStr, longStr, 3));
         List<PediaEntry> entries = List.of(
-                new PediaEntry(longStr, longStr, longStr, false, longStr,
+                new PediaEntry(longStr, longStr, longStr, false, PediaEntry.LEARNING_UNKNOWN,
+                        PediaEntry.COST_UNKNOWN, PediaEntry.COST_UNKNOWN, PediaEntry.DIFFICULTY_UNKNOWN,
+                        longStr, "", List.of(),
                         Map.of("", List.of("a".repeat(150), astral, pairAtCut)),
-                        Map.of("", List.of("l".repeat(200)))));
+                        Map.of("", List.of("l".repeat(200))), Map.of(), List.of()));
 
         FriendlyByteBuf buf = CatalogNetwork.write(CatalogNetwork.FULL_SYNC, categories, entries);
         CatalogNetwork.Parsed parsed = CatalogNetwork.read(buf);
@@ -128,7 +138,7 @@ class CatalogNetworkTest {
         PediaEntry entry = parsed.entries().get(0);
         assertEquals(PediaEntry.MAX_ID, entry.id().length());
         assertEquals(PediaEntry.MAX_ALIAS, entry.aliases().get("").get(0).length());
-        assertEquals(PediaEntry.MAX_LINE_KEY, entry.lines().get("").get(0).length());
+        assertEquals(PediaEntry.MAX_LINE_KEY, entry.desc().get("").get(0).length());
         String truncated = entry.aliases().get("").get(1);
         assertEquals(PediaEntry.MAX_ALIAS, truncated.length());
         assertEquals(PediaEntry.MAX_ALIAS / 2, truncated.codePointCount(0, truncated.length()));
@@ -163,7 +173,7 @@ class CatalogNetworkTest {
         assertEquals(PediaEntry.MAX_ID, entry.id().length());
         assertEquals(PediaEntry.MAX_ICON, entry.iconItem().length());
         assertEquals(PediaEntry.MAX_ALIAS, entry.aliases().get("").get(0).length());
-        assertEquals(PediaEntry.MAX_LINE_KEY, entry.lines().get("").get(0).length());
+        assertEquals(PediaEntry.MAX_LINE_KEY, entry.desc().get("").get(0).length());
 
         JsonObject categoryJson = new JsonObject();
         categoryJson.addProperty("id", longStr);

@@ -3,10 +3,20 @@
   "category": "wizardpedia:guide",
   "title_key": "wizardpedia.entry.about.title",
   "locked": false,
+  "tags": [
+    "guide"
+  ],
   "icon": "minecraft:writable_book",
   "aliases": {
-    "": ["wizardpedia", "pedia", "catalog"],
-    "zh": ["图鉴", "百科"]
+    "": [
+      "wizardpedia",
+      "pedia",
+      "catalog"
+    ],
+    "zh": [
+      "图鉴",
+      "百科"
+    ]
   },
   "lines_key": {
     "": [
