@@ -50,7 +50,7 @@ public class WizardpediaScreen extends Screen {
     private static final int BOOK_W = 256;
     private static final int BOOK_H = 180;
     private static final int PAGE_W = 112;
-    private static final int PAGE_TOP = 4;
+    private static final int PAGE_TOP = 8;
     private static final int PAGE_BOTTOM = 148;
     private static final int STRIP_Y = 152;
     private static final int STRIP_H = 18;
@@ -58,8 +58,9 @@ public class WizardpediaScreen extends Screen {
     private static final int GRID_ROWS = 4;
     private static final int CELL = 26;
     private static final long PAGE_ANIM_MS = 150;
-    /** Ribbon bookmark rails, protruding outside the cover. */
-    private static final int RAIL_W = 30;
+    /** Ribbon bookmark rails, protruding outside the cover. Width adapts
+     *  to the GUI scale so labels stay readable (tooltips always carry the
+     *  full name). */
     private static final int RAIL_H = 16;
     private static final int RAIL_STEP = RAIL_H + 2;
 
@@ -106,19 +107,23 @@ public class WizardpediaScreen extends Screen {
         return by() + PAGE_BOTTOM;
     }
 
+    private int railW() {
+        return Math.max(24, Math.min(56, (this.width - BOOK_W) / 2 - 2));
+    }
+
     private int[] catRect(int index) {
         int y = by() + 6 + index * RAIL_STEP;
-        return new int[] {bx() - RAIL_W + 4, y, bx() + 4, y + RAIL_H};
+        return new int[] {bx() - railW() + 4, y, bx() + 4, y + RAIL_H};
     }
 
     private int[] tagRect(int index) {
         int y = by() + 6 + index * RAIL_STEP;
-        return new int[] {bx() + BOOK_W - 4, y, bx() + BOOK_W + RAIL_W - 4, y + RAIL_H};
+        return new int[] {bx() + BOOK_W - 4, y, bx() + BOOK_W + railW() - 4, y + RAIL_H};
     }
 
     private int[] cellRect(int row, int col) {
-        int x = rightX() + 1 + col * (CELL + 2);
-        int y = pageTop() + 1 + row * (CELL + 2);
+        int x = rightX() + 3 + col * (CELL + 2);
+        int y = pageTop() + 3 + row * (CELL + 2);
         return new int[] {x, y, x + CELL, y + CELL};
     }
 
@@ -230,13 +235,11 @@ public class WizardpediaScreen extends Screen {
         }
         searchFocused = false;
         if (hit(mx, my, aboutRect())) {
-            PediaUiState.navigateTo("wizardpedia:about");
-            animate();
+            navigateIfExists("wizardpedia:about");
             return true;
         }
         if (hit(mx, my, tutorialRect())) {
-            PediaUiState.navigateTo("wizardpedia:datapack_entries");
-            animate();
+            navigateIfExists("wizardpedia:datapack_entries");
             return true;
         }
         // stage cycle (left page bottom corners): base -> stage 1..N -> base
@@ -249,7 +252,7 @@ public class WizardpediaScreen extends Screen {
                 PediaUiState.scroll = 0;
                 return true;
             }
-            if (hit(mx, my, new int[] {mid + 10, pageBottom() - 10, mid + 22, pageBottom() + 2})) {
+            if (hit(mx, my, new int[] {leftX() + PAGE_W - 12, pageBottom() - 10, leftX() + PAGE_W, pageBottom() + 2})) {
                 PediaUiState.stageIndex = (PediaUiState.stageIndex + 1) % count;
                 PediaUiState.scroll = 0;
                 return true;
@@ -340,6 +343,17 @@ public class WizardpediaScreen extends Screen {
 
     private int perPage() {
         return GRID_COLS * GRID_ROWS;
+    }
+
+    /** Navigate only when the target entry exists in the merged view. */
+    private void navigateIfExists(String entryId) {
+        for (PediaEntry entry : PediaState.entries()) {
+            if (entry.id().equals(entryId)) {
+                PediaUiState.navigateTo(entryId);
+                animate();
+                return;
+            }
+        }
     }
 
     private int[] langChipRect() {
@@ -440,21 +454,36 @@ public class WizardpediaScreen extends Screen {
         }
     }
 
-    /** Skin texture + opaque content areas + spine shading. */
+    /**
+     * Skin texture + uniform cover frame + opaque content areas. The frame
+     * band heavily tints the texture edge so noisy source-art margins can
+     * never leak into the layout; ornament still reads through at ~35%.
+     */
     private void renderChrome(GuiGraphics g) {
         int bx = bx();
         int by = by();
         g.blit(skin.texture, bx, by, 0, 0, BOOK_W, BOOK_H, BOOK_W, BOOK_H);
-        // opaque parchment over the content zones (skins keep frame/cover art)
-        g.fill(leftX(), by + PAGE_TOP - 2, leftX() + PAGE_W, by + PAGE_BOTTOM + 2, skin.page);
-        g.fill(rightX(), by + PAGE_TOP - 2, rightX() + PAGE_W, by + PAGE_BOTTOM + 2, skin.page);
-        g.fill(leftX(), by + STRIP_Y, leftX() + 2 * PAGE_W + 2, by + STRIP_Y + STRIP_H, skin.page);
-        // spine
+        int ring = (0xA6 << 24) | (skin.cover & 0xFFFFFF); // ~65% cover tint
+        g.fill(bx, by, bx + BOOK_W, by + BOOK_H, ring);
+        // solid cover margins framing the content block
+        g.fill(bx, by, bx + BOOK_W, by + 2, skin.cover);
+        g.fill(bx, by + 170, bx + BOOK_W, by + BOOK_H, skin.cover);
+        g.fill(bx, by + 2, leftX(), by + 170, skin.cover);
+        g.fill(rightX() + PAGE_W, by + 2, bx + BOOK_W, by + 170, skin.cover);
+        // opaque parchment over the content zones
+        g.fill(leftX(), by + PAGE_TOP, leftX() + PAGE_W, by + PAGE_BOTTOM + 2, skin.page);
+        g.fill(rightX(), by + PAGE_TOP, rightX() + PAGE_W, by + PAGE_BOTTOM + 2, skin.page);
+        g.fill(leftX(), by + STRIP_Y, rightX() + PAGE_W, by + STRIP_Y + STRIP_H, skin.page);
+        // spine between the pages (soft groove, not a hard black seam);
+        // faint continuation through the strip so it reads as dirt-free
         int spine = bx + BOOK_W / 2;
-        g.fill(spine - 6, by + PAGE_TOP - 2, spine + 6, by + PAGE_BOTTOM + 2, 0x33000000);
-        g.fill(spine - 1, by + PAGE_TOP - 2, spine + 1, by + PAGE_BOTTOM + 2, 0x66000000);
-        // content/strip separators
-        g.fill(leftX(), by + STRIP_Y - 1, leftX() + 2 * PAGE_W + 2, by + STRIP_Y, 0x508A7345);
+        g.fill(spine - 5, by + PAGE_TOP, spine + 5, by + 170, 0x22000000);
+        g.fill(spine - 1, by + PAGE_TOP, spine + 1, by + 170, 0x44000000);
+        // content/strip separator
+        g.fill(leftX(), by + STRIP_Y - 1, rightX() + PAGE_W, by + STRIP_Y, 0x508A7345);
+        // cover inner edge highlight
+        g.fill(leftX() - 1, by + 1, leftX(), by + 170, 0x40FFFFFF);
+        g.fill(rightX() + PAGE_W, by + 1, rightX() + PAGE_W + 1, by + 170, 0x40000000);
     }
 
     private void renderCatRail(GuiGraphics g, double mx, double my) {
@@ -481,8 +510,8 @@ public class WizardpediaScreen extends Screen {
             int[] r = catRect(i);
             boolean hover = hit((int) mx, (int) my, r);
             ribbon(g, r, true, active, hover, 0xFF6B5233, 0xFF8A6A3F, 0xFFC9A55C);
-            drawClipped(g, label, r[0] + 4, r[1] + 4, RAIL_W - 8,
-                    active ? 0xFF33220E : 0xFFE8DCBA);
+            drawClipped(g, label, r[0] + 4, r[1] + 4, railW() - 8,
+                    active ? skin.activeText : 0xFFF2E8C8);
             if (hover) hoverTip = tip;
         }
     }
@@ -496,27 +525,32 @@ public class WizardpediaScreen extends Screen {
             Component tip;
             boolean active;
             int color;
+            int chipColor;
             if (idx == 0) {
                 label = plain(Component.translatable("wizardpedia.ui.all"));
                 tip = Component.translatable("wizardpedia.ui.all");
                 active = PediaUiState.selectedTag == null;
-                color = 0xFF6B5233;
+                chipColor = 0xFF6B5233;
             } else if (idx - 1 < tags.size()) {
                 String tag = tags.get(idx - 1);
                 label = tagLabel(tag);
                 tip = Component.translatable("wizardpedia.ui.tag_filter", tagLabel(tag));
                 active = tag.equals(PediaUiState.selectedTag);
-                color = tagColor(idx - 1);
+                chipColor = tagColor(idx - 1);
             } else {
                 return;
             }
             int[] r = tagRect(i);
             boolean hover = hit((int) mx, (int) my, r);
+            // active fill = skin accent (consistent contrast with activeText);
+            // the school color stays on the chip
+            color = active ? skin.accent : chipColor;
             ribbon(g, r, false, active, hover, 0xFF6B5233, 0xFF8A6A3F, color);
-            // color chip on the outer edge
-            g.fill(r[0] + 2, r[1] + 3, r[0] + 6, r[3] - 3, color);
-            drawClipped(g, label, r[0] + 8, r[1] + 4, RAIL_W - 12,
-                    active ? 0xFF33220E : 0xFFE8DCBA);
+            // color chip with a dark outline so it reads on any fill
+            g.fill(r[0] + 1, r[1] + 2, r[0] + 7, r[3] - 2, 0xFF33220E);
+            g.fill(r[0] + 2, r[1] + 3, r[0] + 6, r[3] - 3, chipColor);
+            drawClipped(g, label, r[0] + 8, r[1] + 4, railW() - 12,
+                    active ? skin.activeText : 0xFFF2E8C8);
             if (hover) hoverTip = tip;
         }
     }
@@ -536,6 +570,15 @@ public class WizardpediaScreen extends Screen {
         int body0 = leftSide ? r[0] + 6 : r[0];
         int body1 = leftSide ? r[2] : r[2] - 6;
         g.fill(body0, r[1], body1, r[3], color);
+        if (skin.bannerTabs) { // HOMM signature: hanging banner tail
+            int drop = active ? 6 : 4;
+            fillPolygon(g, new int[][] {{body0, r[3]}, {body1, r[3]},
+                    {(body0 + body1) / 2, r[3] + drop}}, color);
+        }
+        if (active) { // 1px darker outer edge reinforces the state
+            int e0 = leftSide ? body0 : body1 - 1;
+            g.fill(e0, r[1], e0 + 1, r[3], 0x40000000);
+        }
     }
 
     private void renderRightPage(GuiGraphics g, double mx, double my) {
@@ -555,7 +598,13 @@ public class WizardpediaScreen extends Screen {
                 boolean selected = entry.id().equals(PediaUiState.selectedEntryId);
                 boolean hover = hit((int) mx, (int) my, r);
                 g.fill(r[0], r[1], r[2], r[3], skin.cell);
-                if (selected || hover) renderEdge(g, r, skin.accent);
+                if (selected) { // 2px border + brightened fill: strongest state
+                    g.fill(r[0] + 1, r[1] + 1, r[2] - 1, r[3] - 1, 0x24FFFFFF);
+                    renderEdge(g, r, skin.accentText);
+                    renderEdge(g, new int[] {r[0] + 1, r[1] + 1, r[2] - 1, r[3] - 1}, skin.accentText);
+                } else if (hover) {
+                    renderEdge(g, r, skin.accent);
+                }
 
                 ItemStack icon = iconStack(entry.iconItem());
                 if (!icon.isEmpty()) {
@@ -570,6 +619,13 @@ public class WizardpediaScreen extends Screen {
                 }
                 if (hover) {
                     hoverTip = Component.translatable(entry.titleKey());
+                    if (!entry.tags().isEmpty()) {
+                        List<String> tagNames = new ArrayList<>();
+                        for (String tag : entry.tags()) tagNames.add(tagLabel(tag));
+                        hoverTip = hoverTip.copy().append("\n").append(
+                                Component.translatable("wizardpedia.ui.tag_filter",
+                                        String.join(", ", tagNames)));
+                    }
                 }
             }
         }
@@ -578,12 +634,12 @@ public class WizardpediaScreen extends Screen {
         String label = (PediaUiState.gridPage + 1) + "/" + pages;
         int cx = rightX() + PAGE_W / 2;
         g.drawString(this.font, label, cx - this.font.width(label) / 2, pageBottom() - 8, skin.text, false);
-        if (PediaUiState.gridPage > 0) {
-            g.drawString(this.font, "◀", rightX() + 22, pageBottom() - 8, skin.text, false);
-        }
-        if ((PediaUiState.gridPage + 1) * perPage() < entries.size()) {
-            g.drawString(this.font, "▶", rightX() + PAGE_W - 30, pageBottom() - 8, skin.text, false);
-        }
+        boolean hasPrev = PediaUiState.gridPage > 0;
+        boolean hasNext = (PediaUiState.gridPage + 1) * perPage() < entries.size();
+        g.drawString(this.font, "◀", rightX() + 22, pageBottom() - 8,
+                hasPrev ? skin.accentText : 0x557A6647, false);
+        g.drawString(this.font, "▶", rightX() + PAGE_W - 30, pageBottom() - 8,
+                hasNext ? skin.accentText : 0x557A6647, false);
     }
 
     private void renderLeftPage(GuiGraphics g, double mx, double my) {
@@ -621,12 +677,15 @@ public class WizardpediaScreen extends Screen {
             ItemStack icon = iconStack(entry.iconItem());
             if (!icon.isEmpty()) g.renderItem(icon, lx + 2, ty + 2);
         }
-        drawClipped(g, plain(Component.translatable(entry.titleKey())), lx + 20, ty + 2, PAGE_W - 22, skin.text);
-        // school tag color dots
-        int dotX = lx + 20;
+        String title = plain(Component.translatable(entry.titleKey()));
+        drawClipped(g, title, lx + 20, ty + 2, PAGE_W - 22, skin.text);
+        int titleW = Math.min(this.font.width(title), PAGE_W - 22);
+        g.fill(lx + 20, ty + 11, lx + 20 + titleW, ty + 12, skin.accentText);
+        // school tag color dots right after the title text
+        int dotX = lx + 20 + Math.min(titleW + 4, PAGE_W - 26);
         for (String tag : entry.tags()) {
             int color = tagColor(plain(Component.literal(tag)).hashCode());
-            g.fill(dotX, ty + 12, dotX + 3, ty + 15, color);
+            g.fill(dotX, ty + 4, dotX + 3, ty + 7, color);
             dotX += 5;
         }
 
@@ -638,11 +697,11 @@ public class WizardpediaScreen extends Screen {
                 String.format(Locale.ROOT, "%.1f", entry.cooldownSeconds()))));
         if (entry.difficulty() >= 0) stats.add(plain(Component.translatable("wizardpedia.ui.difficulty",
                 String.format(Locale.ROOT, "%.1f", entry.difficulty()))));
-        g.drawString(this.font, String.join(" · ", stats), lx + 2, y, skin.text, false);
+        g.drawString(this.font, String.join(" · ", stats), lx + 4, y, skin.text, false);
         y += 10;
         g.drawString(this.font, plain(Component.translatable("wizardpedia.ui.mastery",
                 entry.learning() < 0 ? "—" : String.format(Locale.ROOT, "%.0f%%", entry.learning()))),
-                lx + 2, y, skin.text, false);
+                lx + 4, y, skin.text, false);
         y += 12;
 
         // chant variant switcher
@@ -650,10 +709,10 @@ public class WizardpediaScreen extends Screen {
         if (variants > 0) {
             String vLabel = Component.translatable("wizardpedia.ui.variants",
                     Math.min(PediaUiState.variantIndex + 1, variants), variants).getString();
-            g.drawString(this.font, "咏唱", lx + 2, y, skin.text, false);
-            g.drawString(this.font, "◀", lx + 22, y, skin.accent, false);
-            g.drawString(this.font, vLabel, lx + 32, y, skin.text, false);
-            g.drawString(this.font, "▶", lx + 40 + this.font.width(vLabel), y, skin.accent, false);
+            g.drawString(this.font, plain(Component.translatable("wizardpedia.ui.chant")), lx + 4, y, skin.text, false);
+            g.drawString(this.font, "◀", lx + 24, y, skin.accentText, false);
+            g.drawString(this.font, vLabel, lx + 34, y, skin.text, false);
+            g.drawString(this.font, "▶", lx + 42 + this.font.width(vLabel), y, skin.accentText, false);
             y += 12;
         }
 
@@ -664,11 +723,18 @@ public class WizardpediaScreen extends Screen {
         int total = lines.size() * 10;
         int maxScroll = Math.max(0, total - (bodyBottom - bodyTop));
         int scroll = Math.min(PediaUiState.scroll, maxScroll);
+        if (maxScroll > 0) { // scroll thumb cue on the body's right edge
+            int track = bodyBottom - bodyTop;
+            int thumbH = Math.max(6, track * track / total);
+            int thumbY = bodyTop + (track - thumbH) * scroll / maxScroll;
+            g.fill(lx + PAGE_W - 2, bodyTop, lx + PAGE_W - 1, bodyBottom, 0x208A7345);
+            g.fill(lx + PAGE_W - 2, thumbY, lx + PAGE_W - 1, thumbY + thumbH, 0x668A7345);
+        }
         g.enableScissor(lx, bodyTop, lx + PAGE_W, bodyBottom);
         int ly = bodyTop - scroll;
         for (BodyLine line : lines) {
             if (ly + 9 >= bodyTop && ly <= bodyBottom) {
-                g.drawString(this.font, line.text(), lx + 2, ly, line.color(), false);
+                g.drawString(this.font, line.text(), lx + 4, ly, line.color(), false);
             }
             ly += 10;
         }
@@ -679,24 +745,27 @@ public class WizardpediaScreen extends Screen {
 
         // stage cycle row (bottom corners)
         if (!entry.stages().isEmpty()) {
-            int count = entry.stages().size() + 1; // + base
-            String stageLabel = (PediaUiState.stageIndex == 0)
+            int count = entry.stages().size() + 1;
+            String stageLabel = PediaUiState.stageIndex == 0
                     ? plain(Component.translatable("wizardpedia.ui.stage.base"))
-                    : plain(Component.translatable("wizardpedia.ui.stage", PediaUiState.stageIndex));
+                    : plain(Component.translatable("wizardpedia.ui.stage",
+                            PediaUiState.stageIndex, entry.stages().size()));
             PediaEntry.PediaStage stage = PediaUiState.stageIndex == 0 ? null
                     : entry.stages().get(Math.min(PediaUiState.stageIndex - 1, entry.stages().size() - 1));
-            String gate = stage == null ? "" : " " + plain(Component.translatable(
-                    "wizardpedia.ui.stage.gate", stage.afterLines(), (int) stage.mastery()));
-            boolean unlocked = stage == null || (entry.learning() >= 0 && entry.learning() >= stage.mastery());
+            boolean unlocked = stage == null || (entry.learning() < 0 || entry.learning() >= stage.mastery());
             int mid = lx + PAGE_W / 2;
-            g.drawString(this.font, "◀", lx, pageBottom() - 8, skin.accent, false);
+            g.drawString(this.font, "◀", lx, pageBottom() - 8, skin.accentText, false);
             g.drawString(this.font, stageLabel, lx + 12, pageBottom() - 8, skin.text, false);
-            int gateColor = unlocked ? 0xFF2C6E2C : 0xFF9B2C2C;
-            g.drawString(this.font, gate + (stage == null ? "" : unlocked ? " ✓" : " ✗"),
-                    lx + 12 + this.font.width(stageLabel), pageBottom() - 8, gateColor, false);
-            g.drawString(this.font, "▶", mid + 10, pageBottom() - 8, skin.accent, false);
-            if (hit((int) mx, (int) my, new int[] {lx, pageBottom() - 10, mid + 22, pageBottom() + 2})) {
-                hoverTip = Component.translatable("wizardpedia.ui.stage_tip");
+            if (stage != null) {
+                int gateColor = unlocked ? 0xFF1F5A23 : 0xFF8A1F1F;
+                g.drawString(this.font, unlocked ? "✓" : "✗",
+                        lx + 12 + this.font.width(stageLabel) + 3, pageBottom() - 8, gateColor, false);
+            }
+            g.drawString(this.font, "▶", lx + PAGE_W - 10, pageBottom() - 8, skin.accentText, false);
+            if (hit((int) mx, (int) my, new int[] {lx, pageBottom() - 10, lx + PAGE_W, pageBottom() + 2})) {
+                hoverTip = stage == null ? Component.translatable("wizardpedia.ui.stage_tip")
+                        : Component.translatable("wizardpedia.ui.stage_gate_tip",
+                                stage.afterLines(), (int) stage.mastery());
             }
         }
     }
@@ -708,7 +777,7 @@ public class WizardpediaScreen extends Screen {
         String lang = PediaUiState.selectedLang;
         var aliases = entry.aliasesFor(lang);
         if (!aliases.isEmpty()) {
-            lines.add(new BodyLine(Component.translatable("wizardpedia.ui.trigger").getVisualOrderText(), skin.accent));
+            lines.add(new BodyLine(Component.translatable("wizardpedia.ui.trigger").getVisualOrderText(), skin.accentText));
             lines.add(new BodyLine(net.minecraft.network.chat.Component.literal("  " + String.join(", ", aliases)).getVisualOrderText(), skin.text));
         }
         var desc = entry.descFor(lang);
@@ -724,13 +793,18 @@ public class WizardpediaScreen extends Screen {
                 boolean release = i == variant.size() - 1 && variant.size() > 1;
                 lines.add(new BodyLine((release ? Component.literal("✦ ") : Component.literal("  "))
                         .append(Component.translatable(variant.get(i))).getVisualOrderText(),
-                        release ? skin.accent : skin.text));
+                        release ? skin.accentText : skin.text));
             }
         }
         int stageIndex = PediaUiState.stageIndex;
         if (stageIndex > 0 && stageIndex <= entry.stages().size()) {
             PediaEntry.PediaStage stage = entry.stages().get(stageIndex - 1);
-            lines.add(new BodyLine(Component.translatable("wizardpedia.ui.stage_effects", stageIndex).getVisualOrderText(), skin.accent));
+            lines.add(new BodyLine(Component.translatable("wizardpedia.ui.stage_effects", stageIndex).getVisualOrderText(), skin.accentText));
+            boolean gateOpen = entry.learning() < 0 || entry.learning() >= stage.mastery();
+            lines.add(new BodyLine(Component.literal("  ").append(Component.translatable(
+                            "wizardpedia.ui.stage_gate_tip", stage.afterLines(), (int) stage.mastery()))
+                    .append(gateOpen ? " ✓" : " ✗").getVisualOrderText(),
+                    gateOpen ? 0xFF1F5A23 : 0xFF8A1F1F));
             for (String key : stage.desc().getOrDefault(PediaEntry.LANG_NEUTRAL, List.of())) {
                 for (var line : this.font.split(Component.translatable(key), PAGE_W - 8)) {
                     lines.add(new BodyLine(line, skin.text));
@@ -773,9 +847,10 @@ public class WizardpediaScreen extends Screen {
 
     private void drawTextButton(GuiGraphics g, int[] r, String label, double mx, double my) {
         boolean hover = hit((int) mx, (int) my, r);
-        if (hover) g.fill(r[0], r[1], r[2], r[3], 0x308A7345);
+        g.fill(r[0], r[1], r[2], r[3], hover ? 0x3D8A7345 : 0x338A7345);
+        renderEdge(g, r, 0x408A7345); // same chip idiom as the language chip
         g.drawCenteredString(this.font, label, (r[0] + r[2]) / 2, r[1] + 5,
-                hover ? skin.accent : skin.text);
+                hover ? skin.accentText : skin.text);
     }
 
     private static void renderEdge(GuiGraphics g, int[] r, int color) {

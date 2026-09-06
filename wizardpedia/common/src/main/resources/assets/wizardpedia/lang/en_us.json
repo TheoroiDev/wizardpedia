@@ -34,9 +34,8 @@
   "wizardpedia.ui.mastery": "Mastery %s",
   "wizardpedia.ui.trigger": "Trigger words",
   "wizardpedia.ui.variants": "%s/%s",
-  "wizardpedia.ui.stage": "Stage %s",
+  "wizardpedia.ui.stage": "Stage %s/%s",
   "wizardpedia.ui.stage.base": "Base",
-  "wizardpedia.ui.stage.gate": "%s lines · %s%%",
   "wizardpedia.ui.stage_effects": "Stage %s effects",
   "wizardpedia.ui.stage_tip": "Cycle the chant-stage ladder (left/right corners)",
   "wizardpedia.ui.tag_filter": "Filter: %s",
@@ -52,5 +51,7 @@
   "wizardpedia.tag.necromancy": "Necromancy",
   "wizardpedia.tag.arcane": "Arcane",
   "wizardpedia.tag.nature": "Nature",
-  "wizardpedia.tag.illusion": "Illusion"
+  "wizardpedia.tag.illusion": "Illusion",
+  "wizardpedia.ui.chant": "Chant",
+  "wizardpedia.ui.stage_gate_tip": "Gate: %s chant lines · mastery %s%%"
 }

@@ -34,9 +34,8 @@
   "wizardpedia.ui.mastery": "熟练 %s",
   "wizardpedia.ui.trigger": "触发语",
   "wizardpedia.ui.variants": "%s/%s",
-  "wizardpedia.ui.stage": "阶 %s",
+  "wizardpedia.ui.stage": "阶 %s/%s",
   "wizardpedia.ui.stage.base": "基础",
-  "wizardpedia.ui.stage.gate": "%s行 · 熟练%s%%",
   "wizardpedia.ui.stage_effects": "%s 阶效果",
   "wizardpedia.ui.stage_tip": "循环切换阶梯咏唱版本（左右下角）",
   "wizardpedia.ui.tag_filter": "筛选: %s",
@@ -52,5 +51,7 @@
   "wizardpedia.tag.necromancy": "死灵",
   "wizardpedia.tag.arcane": "奥术",
   "wizardpedia.tag.nature": "自然",
-  "wizardpedia.tag.illusion": "幻术"
+  "wizardpedia.tag.illusion": "幻术",
+  "wizardpedia.ui.chant": "咏唱",
+  "wizardpedia.ui.stage_gate_tip": "阶门：完成 %s 行 · 熟练 %s%%"
 }
