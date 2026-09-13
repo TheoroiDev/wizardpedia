@@ -17,3 +17,70 @@ apply plugin: "architectury-plugin"
 architectury {
     minecraft = rootProject.minecraft_version
 }
+
+// ---- sibling joint-test jar refresh（wizardpedia 专属，不属于三仓同步的共享约定）----
+// run/mods 里的 voicecast/wizardreal jar 是历次联测手工拷入的快照：不在 devmods
+// manifest（那里只收 Modrinth 预下载的第三方 mod）、无 gradle 依赖，因此永远不会
+// 被自动刷新。本任务用兄弟仓最新本地构建产物替换之；并顺带清掉 run/mods 里冗余
+// 的 wizardpedia 自身 jar（dev 运行由 loom 直接提供本项目 jar，旧拷贝只会顶掉新版本）。
+// 用法：先在兄弟仓 `gradlew build`，再 `gradlew refreshSiblingJars`。
+def siblingJarSpecs = [
+        [prefix: 'voicecast-fabric-1.20.1-', libs: '../voicecast/voicecast/fabric/build/libs', modDirs: ['wizardpedia/fabric/run/mods', 'wizardpedia/fabric/run-server/mods']],
+        [prefix: 'wizardreal-fabric-1.20.1-', libs: '../wizardreal/wizardreal/fabric/build/libs', modDirs: ['wizardpedia/fabric/run/mods', 'wizardpedia/fabric/run-server/mods']],
+        [prefix: 'voicecast-forge-1.20.1-', libs: '../voicecast/voicecast/forge/build/libs', modDirs: ['wizardpedia/forge/run/mods', 'wizardpedia/forge/run-server/mods']],
+        [prefix: 'wizardreal-forge-1.20.1-', libs: '../wizardreal/wizardreal/forge/build/libs', modDirs: ['wizardpedia/forge/run/mods', 'wizardpedia/forge/run-server/mods']],
+]
+
+tasks.register('refreshSiblingJars', {
+    group = 'wizard dev'
+    description = 'Swap hand-copied voicecast/wizardreal jars in run dirs for the newest sibling-repo build outputs.'
+    doLast {
+        int swapped = 0
+        siblingJarSpecs.each { spec ->
+            def libsDir = rootProject.file(spec.libs)
+            def candidates = libsDir.listFiles()?.findAll {
+                it.name.startsWith(spec.prefix) && it.name.endsWith('.jar') &&
+                        !it.name.contains('-dev-shadow') && !it.name.contains('-sources')
+            }
+            if (!candidates) {
+                println "refreshSiblingJars: no build output for ${spec.prefix} (build the sibling repo first)"
+                return
+            }
+            def newest = candidates.max { it.lastModified() }
+            spec.modDirs.each { modDir ->
+                def modsDir = rootProject.file(modDir)
+                if (!modsDir.isDirectory()) return
+                modsDir.listFiles().findAll { it.name.startsWith(spec.prefix) }.each { old ->
+                    if (old.name != newest.name) {
+                        old.delete()
+                        println "refreshSiblingJars: removed stale ${old.name} (${modDir})"
+                    }
+                }
+                def dst = new File(modsDir, newest.name)
+                if (!dst.exists()) {
+                    try {
+                        java.nio.file.Files.createLink(dst.toPath(), newest.toPath())
+                    } catch (IOException e) {
+                        java.nio.file.Files.copy(newest.toPath(), dst.toPath())
+                    }
+                    println "refreshSiblingJars: linked ${newest.name} -> ${modDir}"
+                    swapped++
+                }
+            }
+        }
+        // wizardpedia 自身 jar：loom 运行时自动提供本项目 jar，run/mods 里的拷贝只会
+        // 顶掉新版本——无条件移除（幂等）。
+        rootProject.file('wizardpedia').eachDir { sp ->
+            ['run/mods', 'run-server/mods'].each { sub ->
+                def modsDir = rootProject.file("wizardpedia/${sp.name}/${sub}")
+                if (!modsDir.isDirectory()) return
+                def hits = modsDir.listFiles()?.findAll { it.name.startsWith('wizardpedia-') && it.name.endsWith('.jar') }
+                hits.each { old ->
+                    old.delete()
+                    println "refreshSiblingJars: removed redundant self jar ${old.name}"
+                }
+            }
+        }
+        println "refreshSiblingJars: ${swapped} jar(s) linked"
+    }
+})
