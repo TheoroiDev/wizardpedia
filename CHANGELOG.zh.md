@@ -46,5 +46,6 @@
 - 多加载器仓库引导 + M0 骨架（wizardpedia#1）
 - 联测工具：devFatJar / `-PjointTest` / `-PquickPlay`（wizardpedia#6）
 - 开发运行 `runServer`/`runClient` 目录分离；语音模型硬链接预置进运行目录
+- `refreshSiblingJars` gradle 任务：手工拷入 run/mods 的兄弟仓联测 jar（voicecast/wizardreal，fabric/forge）从兄弟仓最新 `build/libs` 产物刷新（优先硬链接），并幂等清理 run/mods 里冗余的 wizardpedia 自身 jar
 - Modrinth maven 仓库；联测 jar 对齐 voicecast/wizardreal 0.3.1 → 0.3.2
 - 纯开发测试 mod 移出 gradle 依赖：release jar 预下载到工作区 `resources/devmods/<loader>/`，由 `manifest.txt` 驱动接线（fabric 硬链接进 run mods 目录；forge 作为文件依赖由 Loom 重映射；Carpet 的 Forge 移植仍受阻，voicecast#38）；语音模型事实源移至 `resources/models/`

@@ -46,5 +46,6 @@ English primary; Chinese mirror: [CHANGELOG.zh.md](CHANGELOG.zh.md) (keep both i
 - Multi-loader repo bootstrap + M0 skeleton (wizardpedia#1)
 - Joint-test tooling: devFatJar / `-PjointTest` / `-PquickPlay` (wizardpedia#6)
 - Dev `runServer`/`runClient` run directories split; voice models seeded into run dirs as hard links
+- `refreshSiblingJars` gradle task: joint-test jars hand-copied into run/mods (voicecast/wizardreal, fabric/forge) are refreshed from the sibling repos' latest `build/libs` output (hard link preferred) and stale duplicate wizardpedia jars in run/mods are pruned
 - Modrinth maven repo; joint-test jars aligned to voicecast/wizardreal 0.3.1 → 0.3.2
 - Dev-only testing mods moved out of gradle: release jars are pre-downloaded under workspace `resources/devmods/<loader>/` and wired from `manifest.txt` (fabric: hardlinked into the run mods folder; forge: file dependency so Loom remaps the SRG jar; Forge port of Carpet stays blocked, voicecast#38); voice-model fact source moved to `resources/models/`
