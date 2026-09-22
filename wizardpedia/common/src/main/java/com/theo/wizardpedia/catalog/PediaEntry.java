@@ -306,6 +306,14 @@ public record PediaEntry(String id, String categoryId, String titleKey, boolean 
         return chants.getOrDefault(LANG_NEUTRAL, List.of());
     }
 
+    /** The language bucket actually backing {@link #chantsFor} for one page
+     *  (the exact bucket when present, else the neutral bucket) — the
+     *  annotation layer's D2 policy input (wo_b §1.1/§1.2). */
+    public String chantBucketFor(String language) {
+        String lang = language == null ? LANG_NEUTRAL : language;
+        return chants.containsKey(lang) ? lang : LANG_NEUTRAL;
+    }
+
     private static List<String> merged(Map<String, List<String>> map, String language) {
         String lang = language == null ? LANG_NEUTRAL : language;
         if (!map.containsKey(lang) || lang.equals(LANG_NEUTRAL)) {

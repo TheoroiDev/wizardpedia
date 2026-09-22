@@ -12,7 +12,8 @@ run*/
 logs/
 
 # Test capture logs (joint-test / smoke runs) — see AGENTS.md 测试日志落点
-test/
+# (root-anchored: a bare "test/" also ignores src/test/ source files)
+/test/
 
 # IDE - IntelliJ IDEA
 .idea/

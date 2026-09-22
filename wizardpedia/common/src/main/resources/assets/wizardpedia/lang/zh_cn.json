@@ -53,5 +53,10 @@
   "wizardpedia.tag.nature": "自然",
   "wizardpedia.tag.illusion": "幻术",
   "wizardpedia.ui.chant": "咏唱",
-  "wizardpedia.ui.stage_gate_tip": "阶门：完成 %s 行 · 熟练 %s%%"
+  "wizardpedia.ui.stage_gate_tip": "阶门：完成 %s 行 · 熟练 %s%%",
+  "wizardpedia.config.chantReadings.languagePolicy": "注音语言策略",
+  "wizardpedia.config.chantReadings.languages": "注音语言集（手选）",
+  "wizardpedia.config.chantReadings.methodPinyin": "显示拼音",
+  "wizardpedia.config.chantReadings.methodRomaji": "显示罗马字",
+  "wizardpedia.config.chantReadings.methodIpa": "显示 IPA（高级）"
 }

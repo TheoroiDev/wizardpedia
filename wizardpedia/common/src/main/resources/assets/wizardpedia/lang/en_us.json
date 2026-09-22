@@ -53,5 +53,10 @@
   "wizardpedia.tag.nature": "Nature",
   "wizardpedia.tag.illusion": "Illusion",
   "wizardpedia.ui.chant": "Chant",
-  "wizardpedia.ui.stage_gate_tip": "Gate: %s chant lines · mastery %s%%"
+  "wizardpedia.ui.stage_gate_tip": "Gate: %s chant lines · mastery %s%%",
+  "wizardpedia.config.chantReadings.languagePolicy": "Chant reading language policy",
+  "wizardpedia.config.chantReadings.languages": "Chant reading languages (selected)",
+  "wizardpedia.config.chantReadings.methodPinyin": "Read pinyin",
+  "wizardpedia.config.chantReadings.methodRomaji": "Read romaji",
+  "wizardpedia.config.chantReadings.methodIpa": "Read IPA (advanced)"
 }

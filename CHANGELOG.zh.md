@@ -6,7 +6,9 @@
 
 ### Features
 
-- breaking: 目录 wire 格式 v4——咏唱行结构化（`text` + 提供方派生的 `readings` 注音映射，键集固定 `pinyin`/`romaji`/`ipa`；wizardpedia 对 readings 盲渲染、不引用任何提供方类；上限：文本 160、注音键 8、注音值 128 UTF-16 单位——超限截断不拒绝）；v3 包被拒收。`pedia_catalog.json` 导出升 format 4：每条咏唱行携带 `text` 与 `readings`
+- breaking: 目录 wire 格式 v4——咏唱行结构化
+- 书页咏唱注音（ruby 式）：每条咏唱行可在原文下方显示半号灰色注音子行（对提供方下发的 `readings` 盲渲染——wizardpedia 不解释键名）。`config/wizardpedia/client.json` 两个正交开关：`chantLanguagePolicy`（D2：`auto`=仅注非显示语言 / `off` / `selected` 配 `chantReadLanguages` / `all`）与注音法开关 `methodPinyin`/`methodRomaji`（默认开）+ `methodIpa`（高级档，默认关）。未选中注音的行渲染与原先完全一致
+（`text` + 提供方派生的 `readings` 注音映射，键集固定 `pinyin`/`romaji`/`ipa`；wizardpedia 对 readings 盲渲染、不引用任何提供方类；上限：文本 160、注音键 8、注音值 128 UTF-16 单位——超限截断不拒绝）；v3 包被拒收。`pedia_catalog.json` 导出升 format 4：每条咏唱行携带 `text` 与 `readings`
 
 ## 0.1.0 — 未发布
 

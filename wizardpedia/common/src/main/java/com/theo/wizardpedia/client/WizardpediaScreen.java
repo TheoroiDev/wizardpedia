@@ -43,7 +43,10 @@ import org.lwjgl.glfw.GLFW;
  *
  * <p>Behavior: ESC and the inventory key both close the book (state kept in
  * {@link PediaUiState} across open/close), right-click goes back, the mouse
- * wheel scrolls the body / flips grid pages / slides bookmark rails.
+ * wheel scrolls the body / flips grid pages / slides bookmark rails. Chant
+ * lines may carry a ruby reading row ({@link ChantRuby}) per the D2/D6
+ * switches in {@link PediaClientConfig} — lines without a selected reading
+ * render exactly as before.
  */
 public class WizardpediaScreen extends Screen {
 
@@ -721,7 +724,8 @@ public class WizardpediaScreen extends Screen {
         List<BodyLine> lines = buildBody(entry);
         int bodyTop = y;
         int bodyBottom = pageBottom() - (entry.stages().isEmpty() ? 4 : 14);
-        int total = lines.size() * 10;
+        int total = 0;
+        for (BodyLine line : lines) total += ChantRuby.stride(line.reading());
         int maxScroll = Math.max(0, total - (bodyBottom - bodyTop));
         int scroll = Math.min(PediaUiState.scroll, maxScroll);
         if (maxScroll > 0) { // scroll thumb cue on the body's right edge
@@ -734,10 +738,12 @@ public class WizardpediaScreen extends Screen {
         g.enableScissor(lx, bodyTop, lx + PAGE_W, bodyBottom);
         int ly = bodyTop - scroll;
         for (BodyLine line : lines) {
-            if (ly + 9 >= bodyTop && ly <= bodyBottom) {
-                g.drawString(this.font, line.text(), lx + 4, ly, line.color(), false);
+            int stride = ChantRuby.stride(line.reading());
+            if (ly + stride >= bodyTop && ly <= bodyBottom) {
+                ChantRuby.render(g, this.font, line.text(), line.reading(),
+                        lx + 4, ly, line.color(), PAGE_W - 8);
             }
-            ly += 10;
+            ly += stride;
         }
         g.disableScissor();
 
@@ -772,50 +778,63 @@ public class WizardpediaScreen extends Screen {
     }
 
     /** Body lines: trigger words → effect summary → chant lines (release
-     *  line accented) → current-stage effect summary. */
+     *  line accented; each chant line carries its policy-selected ruby
+     *  reading or {@code null} — see {@link ChantRuby}) → current-stage
+     *  effect summary. */
     private List<BodyLine> buildBody(PediaEntry entry) {
         List<BodyLine> lines = new ArrayList<>();
         String lang = PediaUiState.selectedLang;
         var aliases = entry.aliasesFor(lang);
         if (!aliases.isEmpty()) {
-            lines.add(new BodyLine(Component.translatable("wizardpedia.ui.trigger").getVisualOrderText(), skin.accentText));
-            lines.add(new BodyLine(net.minecraft.network.chat.Component.literal("  " + String.join(", ", aliases)).getVisualOrderText(), skin.text));
+            lines.add(new BodyLine(Component.translatable("wizardpedia.ui.trigger").getVisualOrderText(), null, skin.accentText));
+            lines.add(new BodyLine(net.minecraft.network.chat.Component.literal("  " + String.join(", ", aliases)).getVisualOrderText(), null, skin.text));
         }
         var desc = entry.descFor(lang);
         for (String key : desc) {
             for (var line : this.font.split(Component.translatable(key), PAGE_W - 8)) {
-                lines.add(new BodyLine(line, skin.text));
+                lines.add(new BodyLine(line, null, skin.text));
             }
         }
         var chants = entry.chantsFor(lang);
         if (!chants.isEmpty()) {
             List<PediaLine> variant = chants.get(Math.min(PediaUiState.variantIndex, chants.size() - 1));
+            // D2/D6 selection inputs: the bucket the variants were resolved
+            // from + the active display language + the client config.
+            String bucket = entry.chantBucketFor(lang);
+            String mcLang = this.minecraft.getLanguageManager().getSelected();
+            PediaClientConfig.LanguagePolicy policy = PediaClientConfig.chantLanguagePolicy();
+            java.util.Set<String> readLangs = PediaClientConfig.chantReadLanguages();
             for (int i = 0; i < variant.size(); i++) {
                 boolean release = i == variant.size() - 1 && variant.size() > 1;
+                String reading = ReadingSelector.select(bucket, mcLang, policy, readLangs,
+                        PediaClientConfig.methodPinyin(), PediaClientConfig.methodRomaji(),
+                        PediaClientConfig.methodIpa(), variant.get(i).readings());
                 lines.add(new BodyLine((release ? Component.literal("✦ ") : Component.literal("  "))
                         .append(Component.translatable(variant.get(i).text())).getVisualOrderText(),
+                        reading,
                         release ? skin.accentText : skin.text));
             }
         }
         int stageIndex = PediaUiState.stageIndex;
         if (stageIndex > 0 && stageIndex <= entry.stages().size()) {
             PediaEntry.PediaStage stage = entry.stages().get(stageIndex - 1);
-            lines.add(new BodyLine(Component.translatable("wizardpedia.ui.stage_effects", stageIndex).getVisualOrderText(), skin.accentText));
+            lines.add(new BodyLine(Component.translatable("wizardpedia.ui.stage_effects", stageIndex).getVisualOrderText(), null, skin.accentText));
             boolean gateOpen = entry.learning() < 0 || entry.learning() >= stage.mastery();
             lines.add(new BodyLine(Component.literal("  ").append(Component.translatable(
                             "wizardpedia.ui.stage_gate_tip", stage.afterLines(), (int) stage.mastery()))
                     .append(gateOpen ? " ✓" : " ✗").getVisualOrderText(),
+                    null,
                     gateOpen ? 0xFF1F5A23 : 0xFF8A1F1F));
             for (String key : stage.desc().getOrDefault(PediaEntry.LANG_NEUTRAL, List.of())) {
                 for (var line : this.font.split(Component.translatable(key), PAGE_W - 8)) {
-                    lines.add(new BodyLine(line, skin.text));
+                    lines.add(new BodyLine(line, null, skin.text));
                 }
             }
         }
         return lines;
     }
 
-    private record BodyLine(net.minecraft.util.FormattedCharSequence text, int color) {}
+    private record BodyLine(net.minecraft.util.FormattedCharSequence text, String reading, int color) {}
 
     private void renderBottomStrip(GuiGraphics g, double mx, double my) {
         int by = by() + STRIP_Y;
