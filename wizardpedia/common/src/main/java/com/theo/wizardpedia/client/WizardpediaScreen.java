@@ -9,6 +9,7 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import com.theo.wizardpedia.Wizardpedia;
 import com.theo.wizardpedia.catalog.PediaCategory;
 import com.theo.wizardpedia.catalog.PediaEntry;
+import com.theo.wizardpedia.catalog.PediaLine;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -788,11 +789,11 @@ public class WizardpediaScreen extends Screen {
         }
         var chants = entry.chantsFor(lang);
         if (!chants.isEmpty()) {
-            List<String> variant = chants.get(Math.min(PediaUiState.variantIndex, chants.size() - 1));
+            List<PediaLine> variant = chants.get(Math.min(PediaUiState.variantIndex, chants.size() - 1));
             for (int i = 0; i < variant.size(); i++) {
                 boolean release = i == variant.size() - 1 && variant.size() > 1;
                 lines.add(new BodyLine((release ? Component.literal("✦ ") : Component.literal("  "))
-                        .append(Component.translatable(variant.get(i))).getVisualOrderText(),
+                        .append(Component.translatable(variant.get(i).text())).getVisualOrderText(),
                         release ? skin.accentText : skin.text));
             }
         }

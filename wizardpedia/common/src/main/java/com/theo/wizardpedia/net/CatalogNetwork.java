@@ -16,10 +16,10 @@ import java.util.List;
  * The public S2C catalog channel ({@code wizardpedia:catalog}) — the wire
  * contract any provider mod can target with zero compile-time dependency.
  *
- * <p>Packet layout (formatVersion 3 — full content model,
- * docs/wizardpedia.md §4):
+ * <p>Packet layout (formatVersion 4 — full content model + structured chant
+ * lines with provider-derived readings, docs/wizardpedia.md §4):
  * <pre>
- * byte  formatVersion = 3
+ * byte  formatVersion = 4
  * byte  type          // 0 = FULL_SYNC (replace client datapack-source set)
  *                     // 1 = PROVIDER_PUSH (upsert by id into provider-source set)
  * varInt catCount  { utf catId(≤128), utf nameKey(≤128), utf iconItem(≤128), varInt sortIndex }
@@ -32,7 +32,7 @@ import java.util.List;
  *   varInt aliasLangCount { utf lang(≤8), varInt n{utf alias(≤96)} },
  *   varInt descLangCount  { utf lang(≤8), varInt n{utf line(≤160)} },
  *   varInt chantLangCount { utf lang(≤8), varInt variantCount {
- *       varInt lineCount { utf line(≤160) } } },
+ *       varInt lineCount { utf text(≤160), varInt readingCount { utf key(≤8), utf value(≤128) } } } },
  *   varInt stageCount { varInt afterLines, float mastery, varInt manaCost(-1=inherit),
  *       float cooldownSeconds(-1=inherit), varInt descLangCount {...} } }
  * </pre>
@@ -54,7 +54,7 @@ import java.util.List;
 public final class CatalogNetwork {
     public static final ResourceLocation CHANNEL = Wizardpedia.id("catalog");
 
-    public static final byte FORMAT_VERSION = 3;
+    public static final byte FORMAT_VERSION = 4;
     public static final byte FULL_SYNC = 0;
     public static final byte PROVIDER_PUSH = 1;
 

@@ -2,6 +2,12 @@
 
 中文对照版；英文为主：[CHANGELOG.md](CHANGELOG.md)（两份保持同步，冲突以英文为准）。
 
+## Unreleased（未发布）
+
+### Features
+
+- breaking: 目录 wire 格式 v4——咏唱行结构化（`text` + 提供方派生的 `readings` 注音映射，键集固定 `pinyin`/`romaji`/`ipa`；wizardpedia 对 readings 盲渲染、不引用任何提供方类；上限：文本 160、注音键 8、注音值 128 UTF-16 单位——超限截断不拒绝）；v3 包被拒收。`pedia_catalog.json` 导出升 format 4：每条咏唱行携带 `text` 与 `readings`
+
 ## 0.1.0 — 未发布
 
 ### Features

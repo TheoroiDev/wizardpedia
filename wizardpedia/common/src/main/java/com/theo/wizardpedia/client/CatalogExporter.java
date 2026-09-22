@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.theo.wizardpedia.Wizardpedia;
 import com.theo.wizardpedia.catalog.PediaCategory;
 import com.theo.wizardpedia.catalog.PediaEntry;
+import com.theo.wizardpedia.catalog.PediaLine;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -18,8 +19,8 @@ import net.minecraft.network.chat.Component;
 /**
  * Writes the merged final catalog view to
  * {@code <game-dir>/wizardpedia/pedia_catalog.json} (export schema §6.2,
- * format 3: full content model — language-keyed aliases/desc/chants, tags,
- * entity id, stage ladder) —
+ * format 4: full content model + structured chant lines with readings —
+ * language-keyed aliases/desc/chants, tags, entity id, stage ladder) —
  * the external-tooling data source. Runs on the client thread after every
  * state change (FULL_SYNC / PROVIDER_PUSH); sources are not distinguished,
  * texts are resolved in the active game language (missing keys fall back to
@@ -55,7 +56,7 @@ public final class CatalogExporter {
             Path file = mc.gameDirectory.toPath().resolve("wizardpedia").resolve("pedia_catalog.json");
 
             Map<String, Object> root = new LinkedHashMap<>();
-            root.put("format", 3);
+            root.put("format", 4);
             root.put("language", mc.getLanguageManager().getSelected());
 
             List<Object> categories = new ArrayList<>();
@@ -98,13 +99,19 @@ public final class CatalogExporter {
         }
     }
 
-    private static Map<String, Object> exportChantMap(java.util.Map<String, java.util.List<java.util.List<String>>> chants) {
+    private static Map<String, Object> exportChantMap(
+            java.util.Map<String, java.util.List<java.util.List<PediaLine>>> chants) {
         Map<String, Object> out = new LinkedHashMap<>();
-        for (Map.Entry<String, java.util.List<java.util.List<String>>> e : chants.entrySet()) {
+        for (Map.Entry<String, java.util.List<java.util.List<PediaLine>>> e : chants.entrySet()) {
             List<Object> variants = new ArrayList<>();
-            for (java.util.List<String> lines : e.getValue()) {
+            for (java.util.List<PediaLine> lines : e.getValue()) {
                 List<Object> resolved = new ArrayList<>();
-                for (String line : lines) resolved.add(Component.translatable(line).getString());
+                for (PediaLine line : lines) {
+                    Map<String, Object> lineJson = new LinkedHashMap<>();
+                    lineJson.put("text", Component.translatable(line.text()).getString());
+                    if (!line.readings().isEmpty()) lineJson.put("readings", line.readings());
+                    resolved.add(lineJson);
+                }
                 variants.add(resolved);
             }
             out.put(e.getKey(), variants);

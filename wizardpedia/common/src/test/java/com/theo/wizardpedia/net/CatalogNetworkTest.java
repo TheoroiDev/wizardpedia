@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import com.mojang.serialization.JsonOps;
 import com.theo.wizardpedia.catalog.PediaCategory;
 import com.theo.wizardpedia.catalog.PediaEntry;
+import com.theo.wizardpedia.catalog.PediaLine;
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
 import org.junit.jupiter.api.Test;
@@ -36,8 +37,11 @@ class CatalogNetworkTest {
     private static final Map<String, List<String>> LINES = Map.of(
             "en", List.of("wizardreal.chant.explosion.en.l1", "wizardreal.chant.explosion.en.l2"),
             "zh", List.of("黑袍蔽空"));
-    private static final Map<String, List<List<String>>> CHANTS = Map.of(
-            "", List.of(List.of("wizardreal.chant.l1"), List.of("wizardreal.chant.l2a", "wizardreal.chant.l2b")));
+    private static final Map<String, List<List<PediaLine>>> CHANTS = Map.of(
+            "", List.of(List.of(PediaLine.plain("wizardreal.chant.l1")),
+                    List.of(PediaLine.plain("wizardreal.chant.l2a"),
+                            new PediaLine("wizardreal.chant.l2b",
+                                    Map.of("pinyin", "hēi páo bì kōng")))));
     private static final List<PediaEntry.PediaStage> STAGES = List.of(
             new PediaEntry.PediaStage(3, 25.0f, 20, 6.0f, Map.of("", List.of("wizardreal.effect.explosion"))));
 
@@ -71,8 +75,8 @@ class CatalogNetworkTest {
 
     @Test
     void formatVersionMismatchRejected() {
-        // v1 (pre language annotation) and unknown future versions: both rejected.
-        for (byte stale : new byte[] {1, 99}) {
+        // v3 (pre structured chant lines) and unknown future versions: rejected.
+        for (byte stale : new byte[] {3, 99}) {
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             buf.writeByte(stale);
             buf.writeByte(CatalogNetwork.FULL_SYNC);
@@ -181,5 +185,40 @@ class CatalogNetworkTest {
         PediaCategory category = PediaCategory.CODEC.parse(JsonOps.INSTANCE, categoryJson).result().orElseThrow();
         assertEquals(PediaCategory.MAX_ID, category.id().length());
         assertEquals(PediaCategory.MAX_NAME_KEY, category.nameKey().length());
+    }
+
+    @Test
+    void chantLineReadingsSurviveWire() {
+        // v4: structured chant lines carry the annotation map (text + readings)
+        FriendlyByteBuf buf = CatalogNetwork.write(CatalogNetwork.PROVIDER_PUSH, List.of(), ENTRIES);
+        CatalogNetwork.Parsed parsed = CatalogNetwork.read(buf);
+        assertNotNull(parsed);
+        PediaLine bare = parsed.entries().get(0).chants().get("").get(0).get(0);
+        assertEquals("wizardreal.chant.l1", bare.text());
+        assertEquals(Map.of(), bare.readings(), "plain lines keep an empty readings map");
+        PediaLine annotated = parsed.entries().get(0).chants().get("").get(1).get(1);
+        assertEquals("wizardreal.chant.l2b", annotated.text());
+        assertEquals(Map.of("pinyin", "hēi páo bì kōng"), annotated.readings());
+    }
+
+    @Test
+    void oversizedReadingsTruncatedOnWire() {
+        String longText = "t".repeat(300);
+        String longReading = "ā".repeat(200); // multi-byte chars, > 128 UTF-16 units
+        Map<String, List<List<PediaLine>>> chants = Map.of("",
+                List.of(List.of(new PediaLine(longText, Map.of("pinyin", longReading)))));
+        PediaEntry entry = new PediaEntry("x:y", "x:cat", "x.key", false, PediaEntry.LEARNING_UNKNOWN,
+                PediaEntry.COST_UNKNOWN, PediaEntry.COST_UNKNOWN, PediaEntry.DIFFICULTY_UNKNOWN,
+                "", "", List.of(), Map.of(), Map.of(), chants, List.of());
+
+        FriendlyByteBuf buf = CatalogNetwork.write(CatalogNetwork.FULL_SYNC, List.of(), List.of(entry));
+        CatalogNetwork.Parsed parsed = CatalogNetwork.read(buf);
+
+        assertNotNull(parsed, "oversized readings must truncate, not break the sync");
+        PediaLine line = parsed.entries().get(0).chants().get("").get(0).get(0);
+        assertEquals(PediaEntry.MAX_LINE_KEY, line.text().length());
+        assertEquals("pinyin", line.readings().keySet().iterator().next());
+        String reading = line.readings().values().iterator().next();
+        assertEquals(PediaLine.MAX_READING_VALUE, reading.length());
     }
 }

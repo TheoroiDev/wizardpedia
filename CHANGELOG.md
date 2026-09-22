@@ -2,6 +2,12 @@
 
 English primary; Chinese mirror: [CHANGELOG.zh.md](CHANGELOG.zh.md) (keep both in sync, English wins on conflict).
 
+## Unreleased
+
+### Features
+
+- breaking: catalog wire format v4 — chant lines are structured (`text` + a provider-derived `readings` map with the fixed key set `pinyin`/`romaji`/`ipa`; wizardpedia renders readings blindly, no provider classes referenced; caps: text 160, reading key 8, reading value 128 UTF-16 units — oversized values are truncated, never rejected); v3 packets are rejected. `pedia_catalog.json` export bumps to format 4: each chant line carries `text` plus its `readings`
+
 ## 0.1.0 — unreleased
 
 ### Features

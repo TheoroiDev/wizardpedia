@@ -13,7 +13,7 @@ import java.util.Set;
 
 /**
  * A catalog entry (book grid cell). Sourced from datapack JSON or the wire
- * format (provider push); fields follow the wire contract v3 in
+ * format (provider push); fields follow the wire contract v4 in
  * docs/wizardpedia.md §4. Content-model (provider-agnostic):
  * <ul>
  *   <li>{@code entityId} — optional living-entity id; the detail page renders
@@ -24,8 +24,9 @@ import java.util.Set;
  *       neutral bucket, shown on every language page);</li>
  *   <li>{@code desc} — description lines per language (lang keys or literal
  *       text; the translatable missing-key fallback renders both);</li>
- *   <li>{@code chants} — per language → chant variants → ordered lines
- *       (the variant switcher cycles the middle level);</li>
+ *   <li>{@code chants} — per language → chant variants → ordered structured
+ *       {@link PediaLine}s (text + provider-derived readings; the variant
+ *       switcher cycles the middle level);</li>
  *   <li>{@code stages} — ascending tier ladder (e.g. spell chant stages):
  *       gate values + per-stage description lines.</li>
  * </ul>
@@ -35,7 +36,7 @@ public record PediaEntry(String id, String categoryId, String titleKey, boolean 
                          String iconItem, String entityId, List<String> tags,
                          Map<String, List<String>> aliases,
                          Map<String, List<String>> desc,
-                         Map<String, List<List<String>>> chants,
+                         Map<String, List<List<PediaLine>>> chants,
                          List<PediaStage> stages) {
 
     /** Learning value meaning "not provided by the source" (datapack entries). */
@@ -109,17 +110,27 @@ public record PediaEntry(String id, String categoryId, String titleKey, boolean 
         return out.isEmpty() ? Map.of() : Collections.unmodifiableMap(out);
     }
 
-    private static Map<String, List<List<String>>> orderedChants(Map<String, List<List<String>>> in) {
+    private static Map<String, List<List<PediaLine>>> orderedChants(Map<String, List<List<PediaLine>>> in) {
         if (in == null || in.isEmpty()) return Map.of();
-        Map<String, List<List<String>>> out = new LinkedHashMap<>();
-        for (Map.Entry<String, List<List<String>>> e : in.entrySet()) {
+        Map<String, List<List<PediaLine>>> out = new LinkedHashMap<>();
+        for (Map.Entry<String, List<List<PediaLine>>> e : in.entrySet()) {
             if (e.getKey() == null || e.getValue() == null || e.getValue().isEmpty()) continue;
-            List<List<String>> variants = new ArrayList<>(e.getValue().size());
-            for (List<String> lines : e.getValue()) variants.add(lines == null ? List.of() : List.copyOf(lines));
+            List<List<PediaLine>> variants = new ArrayList<>(e.getValue().size());
+            for (List<PediaLine> lines : e.getValue()) {
+                variants.add(lines == null ? List.of() : List.copyOf(lines));
+            }
             out.put(e.getKey(), Collections.unmodifiableList(variants));
         }
         return out.isEmpty() ? Map.of() : Collections.unmodifiableMap(out);
     }
+
+    /** One structured chant line (text + readings map). */
+    public static final Codec<PediaLine> LINE_CODEC = RecordCodecBuilder.create(i -> i.group(
+            WireText.capped(MAX_LINE_KEY).fieldOf("text").forGetter(PediaLine::text),
+            Codec.unboundedMap(WireText.capped(PediaLine.MAX_READING_KEY),
+                    WireText.capped(PediaLine.MAX_READING_VALUE))
+                    .optionalFieldOf("readings", Map.of()).forGetter(PediaLine::readings)
+    ).apply(i, PediaLine::new));
 
     public static final Codec<PediaEntry> CODEC = RecordCodecBuilder.create(i -> i.group(
             WireText.capped(MAX_ID).fieldOf("id").forGetter(PediaEntry::id),
@@ -136,7 +147,7 @@ public record PediaEntry(String id, String categoryId, String titleKey, boolean 
             langMapCodec(MAX_ALIAS).optionalFieldOf("aliases", Map.of()).forGetter(PediaEntry::aliases),
             langMapCodec(MAX_LINE_KEY).optionalFieldOf("lines_key", Map.of()).forGetter(PediaEntry::desc),
             Codec.unboundedMap(WireText.capped(MAX_LANG),
-                    WireText.capped(MAX_LINE_KEY).listOf().listOf())
+                    LINE_CODEC.listOf().listOf())
                     .optionalFieldOf("chants", Map.of()).forGetter(PediaEntry::chants),
             PediaStage.CODEC.listOf().optionalFieldOf("stages", List.of()).forGetter(PediaEntry::stages)
     ).apply(i, PediaEntry::new));
@@ -162,12 +173,21 @@ public record PediaEntry(String id, String categoryId, String titleKey, boolean 
         writeLangMap(buf, entry.aliases, MAX_ALIAS);
         writeLangMap(buf, entry.desc, MAX_LINE_KEY);
         buf.writeVarInt(entry.chants.size());
-        for (Map.Entry<String, List<List<String>>> e : entry.chants.entrySet()) {
+        for (Map.Entry<String, List<List<PediaLine>>> e : entry.chants.entrySet()) {
             buf.writeUtf(WireText.truncate(e.getKey(), MAX_LANG), MAX_LANG);
             buf.writeVarInt(e.getValue().size());
-            for (List<String> lines : e.getValue()) {
+            for (List<PediaLine> lines : e.getValue()) {
                 buf.writeVarInt(lines.size());
-                for (String line : lines) buf.writeUtf(WireText.truncate(line, MAX_LINE_KEY), MAX_LINE_KEY);
+                for (PediaLine line : lines) {
+                    buf.writeUtf(WireText.truncate(line.text(), MAX_LINE_KEY), MAX_LINE_KEY);
+                    buf.writeVarInt(line.readings().size());
+                    for (Map.Entry<String, String> r : line.readings().entrySet()) {
+                        buf.writeUtf(WireText.truncate(r.getKey(), PediaLine.MAX_READING_KEY),
+                                PediaLine.MAX_READING_KEY);
+                        buf.writeUtf(WireText.truncate(r.getValue(), PediaLine.MAX_READING_VALUE),
+                                PediaLine.MAX_READING_VALUE);
+                    }
+                }
             }
         }
         buf.writeVarInt(entry.stages.size());
@@ -216,17 +236,26 @@ public record PediaEntry(String id, String categoryId, String titleKey, boolean 
         return ordered(out);
     }
 
-    private static Map<String, List<List<String>>> readChantMap(FriendlyByteBuf buf) {
+    private static Map<String, List<List<PediaLine>>> readChantMap(FriendlyByteBuf buf) {
         int langCount = buf.readVarInt();
-        Map<String, List<List<String>>> out = new LinkedHashMap<>(langCount);
+        Map<String, List<List<PediaLine>>> out = new LinkedHashMap<>(langCount);
         for (int i = 0; i < langCount; i++) {
             String lang = buf.readUtf(MAX_LANG);
             int variantCount = buf.readVarInt();
-            List<List<String>> variants = new ArrayList<>(variantCount);
+            List<List<PediaLine>> variants = new ArrayList<>(variantCount);
             for (int v = 0; v < variantCount; v++) {
                 int lineCount = buf.readVarInt();
-                List<String> lines = new ArrayList<>(lineCount);
-                for (int l = 0; l < lineCount; l++) lines.add(buf.readUtf(MAX_LINE_KEY));
+                List<PediaLine> lines = new ArrayList<>(lineCount);
+                for (int l = 0; l < lineCount; l++) {
+                    String text = buf.readUtf(MAX_LINE_KEY);
+                    int readingCount = buf.readVarInt();
+                    Map<String, String> readings = new LinkedHashMap<>(readingCount);
+                    for (int r = 0; r < readingCount; r++) {
+                        readings.put(buf.readUtf(PediaLine.MAX_READING_KEY),
+                                buf.readUtf(PediaLine.MAX_READING_VALUE));
+                    }
+                    lines.add(new PediaLine(text, readings));
+                }
                 variants.add(List.copyOf(lines));
             }
             out.put(lang, List.copyOf(variants));
@@ -270,9 +299,9 @@ public record PediaEntry(String id, String categoryId, String titleKey, boolean 
     /** Chant variants for one language: that language's variants, else the
      *  neutral variants, else empty (no cross-language merge — variants are
      *  per-language performances). */
-    public List<List<String>> chantsFor(String language) {
+    public List<List<PediaLine>> chantsFor(String language) {
         String lang = language == null ? LANG_NEUTRAL : language;
-        List<List<String>> exact = chants.get(lang);
+        List<List<PediaLine>> exact = chants.get(lang);
         if (exact != null) return exact;
         return chants.getOrDefault(LANG_NEUTRAL, List.of());
     }
