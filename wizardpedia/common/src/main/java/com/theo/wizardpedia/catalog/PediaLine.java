@@ -25,7 +25,7 @@ public record PediaLine(String text, Map<String, String> readings) {
         readings = readings == null || readings.isEmpty() ? Map.of() : Map.copyOf(readings);
     }
 
-    /** Line without readings (legacy data / unannotated buckets). */
+    /** Line without readings (unannotated bucket / plain text). */
     public static PediaLine plain(String text) {
         return new PediaLine(text, Map.of());
     }
