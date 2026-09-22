@@ -1,5 +1,7 @@
 # wizardpedia 真机测试 Checklist（catalog v3 双页书）
 
+> **〔已取代 2026-09-22〕** 本文件已由 **`docs/testing/e2e_checklist.md`**（实机 E2E 唯一跟踪清单）合并取代，此后不再更新；未勾选条目已全部并入新清单（ID 沿用）。本文件保留作历史记录。
+
 > **如何使用**：① 执行环境——JDK 21 跑 Gradle，`gradlew :wizardpedia-<fabric|forge>:runClient / runServer`；run 目录自动分离、runClient 用户名固定 `dev`、模型按 `resources/models/manifest.txt` 硬链接预置；联测可配 `-PjointTest=true`（forge 客户端拉兄弟仓 jar）与 `-PquickPlay=host:port`（自动进服）。② 判定记录回写本文件末"判定记录"表；**截图与日志一律写 `wizardpedia/test/logs/`**（本清单的核心闸门就是截图留证）。③ 联测历史判定与契约口径见 `docs/ref/wizardpedia.md` §7，本清单不重复。
 > 分级：P0 = 挡 TRL 8 闸门（builder plan："catalog 真机截图/E2E 挂起"）；P1 = 发布前必过；P2 = 质量加固。v2 时代 fabric 联测已于 2026-09-02 通过，v3 双页书全部需复测。
 
