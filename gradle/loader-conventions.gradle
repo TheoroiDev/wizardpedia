@@ -1,14 +1,14 @@
-// Applied from the four platform subprojects only (fabric/forge x
-// voicecast/wizardreal). Loom run configurations:
+// wizardpedia variant of the shared loader-conventions (AGENTS.md §5):
+// design-in-difference vs the voicecast/wizardreal file = quickPlay join
+// hook, NO voicecastVerbose bridge (there is no voicecast bridge here).
+// Loom run configurations:
 //   - fixed dev username instead of random "Player12345"
-//   - verbose bridge: `gradlew runClient -PvoicecastVerbose=true` injects
-//     -Dvoicecast.verbose=true into the forked game JVM (Gradle's own -D only
-//     reaches the Gradle JVM, not the game process).
+//   - quickPlay join: `gradlew runClient -PquickPlay=host:port` makes the
+//     dev client join a server on launch (MC 1.20+ quick play)
 //   - dev-server auto-configuration: runServer writes eula=true and flips
 //     online-mode=false in the run dir before the JVM starts (other
 //     server.properties keys are preserved).
 
-def voicecastVerbose = project.findProperty("voicecastVerbose") == "true"
 def devUsername = project.findProperty("devUsername") ?: "dev"
 
 loom {
@@ -16,7 +16,12 @@ loom {
         client {
             programArgs("--username", devUsername)
             vmArgs "-Xmx8G" // unset, the JVM defaults to 1/4 of physical RAM
-            if (voicecastVerbose) vmArgs "-Dvoicecast.verbose=true"
+            // Automation hook (joint testing): -PquickPlay=host:port makes the
+            // dev client join a server on launch (MC 1.20+ quick play).
+            def quickPlay = project.findProperty("quickPlay")
+            if (quickPlay != null) {
+                programArgs("--quickPlayMultiplayer", quickPlay.toString())
+            }
         }
         server {
             // Separate run dir from the client: two live JVMs on one `run/`
@@ -28,7 +33,6 @@ loom {
             // all repos per AGENTS.md.)
             runDir "run-server"
             vmArgs "-Xmx8G" // unset, the JVM defaults to 1/4 of physical RAM
-            if (voicecastVerbose) vmArgs "-Dvoicecast.verbose=true"
         }
     }
 }
