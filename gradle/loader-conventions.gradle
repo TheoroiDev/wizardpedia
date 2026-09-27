@@ -1,15 +1,14 @@
-// Applied from the platform subprojects only (fabric/forge). Loom run
-// configurations:
+// Applied from the four platform subprojects only (fabric/forge x
+// voicecast/wizardreal). Loom run configurations:
 //   - fixed dev username instead of random "Player12345"
-//   - run the game on the Java 17 toolchain: Gradle 9 defaults JavaExec to the
-//     daemon JVM (21), which makes Loom auto-upgrade LWJGL to 3.3.2-snapshot —
-//     i.e. the game no longer runs on the exact vanilla 1.20.1 stack
-//     (Java 17 + LWJGL 3.3.1). Pinning run tasks to 17 keeps the dev runtime
-//     identical to what players use.
+//   - verbose bridge: `gradlew runClient -PvoicecastVerbose=true` injects
+//     -Dvoicecast.verbose=true into the forked game JVM (Gradle's own -D only
+//     reaches the Gradle JVM, not the game process).
 //   - dev-server auto-configuration: runServer writes eula=true and flips
 //     online-mode=false in the run dir before the JVM starts (other
 //     server.properties keys are preserved).
 
+def voicecastVerbose = project.findProperty("voicecastVerbose") == "true"
 def devUsername = project.findProperty("devUsername") ?: "dev"
 
 loom {
@@ -17,25 +16,28 @@ loom {
         client {
             programArgs("--username", devUsername)
             vmArgs "-Xmx8G" // unset, the JVM defaults to 1/4 of physical RAM
-            // Automation hook (joint testing): -PquickPlay=host:port makes the
-            // dev client join a server on launch (MC 1.20+ quick play).
-            def quickPlay = project.findProperty("quickPlay")
-            if (quickPlay != null) {
-                programArgs("--quickPlayMultiplayer", quickPlay.toString())
-            }
+            if (voicecastVerbose) vmArgs "-Dvoicecast.verbose=true"
         }
         server {
             // Separate run dir from the client: two live JVMs on one `run/`
             // collide on Windows file locks (log4j latest.log deletion,
             // FabricLoader run/.fabric/processedMods remap cache) and die
-            // with "Failed to remap mods!" / AccessDenied. runServer's
+            // with "Failed to remap mods!" / AccessDenied. The runServer
             // eula/online-mode auto-config below follows this dir.
+            // (Reproduced in wizardpedia joint testing 2026-09-02; synced to
+            // all repos per AGENTS.md.)
             runDir "run-server"
             vmArgs "-Xmx8G" // unset, the JVM defaults to 1/4 of physical RAM
+            if (voicecastVerbose) vmArgs "-Dvoicecast.verbose=true"
         }
     }
 }
 
+// Run the game on the Java 17 toolchain: Gradle 9 defaults JavaExec to the
+// daemon JVM (21), which makes Loom auto-upgrade LWJGL to 3.3.2-snapshot —
+// i.e. the game no longer runs on the exact vanilla 1.20.1 stack
+// (Java 17 + LWJGL 3.3.1). Pinning run tasks to 17 keeps the dev runtime
+// identical to what players use.
 tasks.matching { it.name in ["runClient", "runServer"] }.configureEach {
     javaLauncher.set(javaToolchains.launcherFor {
         languageVersion = JavaLanguageVersion.of(17)
@@ -46,27 +48,11 @@ tasks.matching { it.name in ["runClient", "runServer"] }.configureEach {
 // Loom caches remapped mavenLocal jars under <repo>/.gradle/loom-cache/
 // remapped_mods keyed by coordinates — republishing voicecast to mavenLocal
 // does NOT invalidate them, so dev runs silently keep using the old jar
-// (AGENTS.md troubleshooting entry). -PwipeRemappedCache=true registers a
-// task that deletes remapped/com/theo before build/runClient/runServer;
-// without the property nothing changes.
-if (project.findProperty("wipeRemappedCache") == "true") {
-    def wipeRemappedDir = rootProject.file(".gradle/loom-cache/remapped_mods/remapped/com/theo")
-    def wipeRemappedTask = tasks.register("wipeRemappedCache") {
-        group = "wizard dev"
-        description = "Delete the loom remapped_mods cache for com.theo (stale mavenLocal remaps)."
-        doLast {
-            if (wipeRemappedDir.isDirectory()) {
-                project.delete(wipeRemappedDir)
-                project.logger.lifecycle("wipeRemappedCache: deleted ${wipeRemappedDir}")
-            } else {
-                project.logger.lifecycle("wipeRemappedCache: nothing to delete at ${wipeRemappedDir}")
-            }
-        }
-    }
-    tasks.matching { it.name in ["build", "runClient", "runServer"] }.configureEach {
-        dependsOn wipeRemappedTask
-    }
-}
+// (AGENTS.md troubleshooting entry). Model-download/remap cache wiping is
+// deliberately NOT automated inside the build (wizardReal#51): any in-build
+// deletion races with loom's configuration-time remap staging. When voicecast
+// is republished to mavenLocal, wipe the cache manually first:
+//   ./gradlew --stop && rm -rf .gradle/loom-cache/remapped_mods && ./gradlew build
 
 // ---- dev run auto-configuration ------------------------------------------
 
